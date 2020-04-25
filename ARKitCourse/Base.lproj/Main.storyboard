@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15702" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15704"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="ARKitCourse" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="YTN-c8-aP3">
+                                <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                            </arscnView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="XCW-T9-ccL">
+                                <rect key="frame" x="20" y="762" width="80" height="80"/>
+                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="XCW-T9-ccL" secondAttribute="height" multiplier="1:1" id="CN6-sp-fOY"/>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="80" id="mlh-fV-kjz"/>
+                                </constraints>
+                                <state key="normal" title="Add"/>
+                                <connections>
+                                    <action selector="didTapLeftButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="pcc-DQ-GEJ"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gdV-44-I4D">
+                                <rect key="frame" x="167" y="762" width="80" height="80"/>
+                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="gdV-44-I4D" secondAttribute="height" multiplier="1:1" id="YY1-vx-qAa"/>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="80" id="wxe-PJ-iMn"/>
+                                </constraints>
+                                <state key="normal" title="Draw"/>
+                                <connections>
+                                    <action selector="didTapMiddleButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="bao-w8-7LF"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="qLt-Ah-uz0">
+                                <rect key="frame" x="314" y="762" width="80" height="80"/>
+                                <color key="backgroundColor" red="1" green="0.80000001190000003" blue="0.40000000600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="qLt-Ah-uz0" secondAttribute="height" multiplier="1:1" id="YEc-jF-hUr"/>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="80" id="tFh-A2-V9H"/>
+                                </constraints>
+                                <state key="normal" title="Reset"/>
+                                <connections>
+                                    <action selector="didTapRightButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Hqz-jh-Yg4"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <constraints>
+                            <constraint firstItem="gdV-44-I4D" firstAttribute="width" secondItem="gdV-44-I4D" secondAttribute="height" multiplier="1:1" id="3Qw-Gd-KFJ"/>
+                            <constraint firstItem="YTN-c8-aP3" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="5gG-OW-OL0"/>
+                            <constraint firstItem="gdV-44-I4D" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="XCW-T9-ccL" secondAttribute="trailing" constant="8" symbolic="YES" id="9CN-We-AtO"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="XCW-T9-ccL" secondAttribute="bottom" constant="20" id="A7x-9J-Xu0"/>
+                            <constraint firstItem="gdV-44-I4D" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="DOk-wz-cG1"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="gdV-44-I4D" secondAttribute="bottom" constant="20" id="KcU-Fp-gvO"/>
+                            <constraint firstAttribute="trailing" secondItem="qLt-Ah-uz0" secondAttribute="trailing" constant="20" id="O6X-Ea-xWT"/>
+                            <constraint firstAttribute="bottom" secondItem="YTN-c8-aP3" secondAttribute="bottom" id="ixp-58-0PX"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="qLt-Ah-uz0" secondAttribute="bottom" constant="20" id="las-zr-GFy"/>
+                            <constraint firstItem="XCW-T9-ccL" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="m2e-qp-xQK"/>
+                            <constraint firstAttribute="trailing" secondItem="YTN-c8-aP3" secondAttribute="trailing" id="pcG-LK-NxI"/>
+                            <constraint firstItem="qLt-Ah-uz0" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="gdV-44-I4D" secondAttribute="trailing" constant="8" symbolic="YES" id="tKS-qN-t8G"/>
+                            <constraint firstItem="YTN-c8-aP3" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="wKK-cD-rWw"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                    </view>
+                    <connections>
+                        <outlet property="leftButton" destination="XCW-T9-ccL" id="smj-xR-KiJ"/>
+                        <outlet property="middleButton" destination="gdV-44-I4D" id="Y1K-xE-o2W"/>
+                        <outlet property="rightButton" destination="qLt-Ah-uz0" id="Ppm-Od-kvf"/>
+                        <outlet property="sceneView" destination="YTN-c8-aP3" id="FPx-qV-3KY"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="114" y="127"/>
+        </scene>
+    </scenes>
+</document>
