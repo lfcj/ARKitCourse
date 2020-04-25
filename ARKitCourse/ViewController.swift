@@ -23,7 +23,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var rightButton: UIButton!
     @IBOutlet weak var middleButton: UIButton!
 
-    private var currentSection = Section.section4
+    private var currentSection = Section.section5
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,6 +31,11 @@ class ViewController: UIViewController {
         sceneView.session.run(configuration)
 
         configureCurrentSection()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        makeSolarSystem()
     }
 
     // MARK: - Actions
@@ -72,7 +77,7 @@ private extension ViewController {
         case .section4:
             configureSection4(isHidden: false)
         case .section5:
-            break
+            configureSection5(isHidden: false)
         case .section6:
             break
         }
@@ -92,14 +97,15 @@ private extension ViewController {
     }
 
     func configureSection5(isHidden: Bool) {
-        
+        sceneView.autoenablesDefaultLighting = !isHidden
+        [leftButton, rightButton, middleButton].forEach { $0?.isHidden = !isHidden}
     }
     func configureSection6(isHidden: Bool) {
         
     }
 }
 
-// MARK: - Section 3
+// MARK: - Section 3 - House
 
 private extension ViewController {
 
@@ -137,7 +143,7 @@ private extension ViewController {
 
 }
 
-// MARK: - ARSCNViewDelegate
+// MARK: - ARSCNViewDelegate + Section 4 - Drawing
 
 extension ViewController: ARSCNViewDelegate {
 
@@ -174,9 +180,104 @@ extension ViewController: ARSCNViewDelegate {
 
 }
 
+// MARK: - Section 5 - Solar System
+
+private extension ViewController {
+
+    func makeSolarSystem() {
+        guard .section5 == currentSection else {
+            return
+        }
+        let sun = makeSun()
+        let earth = makeEarth()
+        let venus = makeVenus()
+
+        earth.position = sun.position
+        venus.position = sun.position
+
+        sceneView.scene.rootNode.addChildNode(sun)
+        sceneView.scene.rootNode.addChildNode(earth)
+        sceneView.scene.rootNode.addChildNode(venus)
+    }
+
+    func makeEarth() -> SCNNode {
+        let earthParent = SCNNode()
+        let earth = makePlanet(
+            geometry: SCNSphere(radius: 0.2),
+            diffuse: #imageLiteral(resourceName: "Earth day"),
+            specular: #imageLiteral(resourceName: "Earth Specular"),
+            emission: #imageLiteral(resourceName: "Earth Emission"),
+            normal: #imageLiteral(resourceName: "Earth Normal"),
+            position: SCNVector3(1.2 ,0 , 0))
+
+        earthParent.runAction(makeForeverRotation(duration: 14))
+        earthParent.addChildNode(earth)
+        earth.runAction(makeForeverRotation(duration: 8))
+        let moon = makeMoon()
+        moon.position = SCNVector3(1.2 ,0 , 0)
+        earthParent.addChildNode(moon)
+        return earthParent
+    }
+
+    func makeMoon() -> SCNNode {
+        let moonParent = SCNNode()
+        let moon = makePlanet(
+            geometry: SCNSphere(radius: 0.05),
+            diffuse: #imageLiteral(resourceName: "moon Diffuse"),
+            specular: nil,
+            emission: nil,
+            normal: nil,
+            position: SCNVector3(0,0,-0.3))
+        moonParent.runAction(makeForeverRotation(duration: 5))
+        moonParent.addChildNode(moon)
+        return moonParent
+    }
+
+    func makeSun() -> SCNNode {
+        let sun = SCNNode(geometry: SCNSphere(radius: 0.35))
+        setDiffuse(#imageLiteral(resourceName: "Sun diffuse"), to: sun)
+        sun.position = SCNVector3(0,0,-1)
+        sun.runAction(makeForeverRotation(duration: 8))
+        return sun
+    }
+
+    func makeVenus() -> SCNNode {
+        let venusParent = SCNNode()
+        let venus = makePlanet(
+            geometry: SCNSphere(radius: 0.1),
+            diffuse: #imageLiteral(resourceName: "Venus Surface"),
+            specular: nil,
+            emission: #imageLiteral(resourceName: "Venus Atmosphere"),
+            normal: nil,
+            position: SCNVector3(0.7, 0, 0))
+        venusParent.runAction(makeForeverRotation(duration: 10))
+        venusParent.addChildNode(venus)
+        venus.runAction(makeForeverRotation(duration: 8))
+        return venusParent
+    }
+
+    func makePlanet(
+        geometry: SCNGeometry,
+        diffuse: UIImage,
+        specular: UIImage?,
+        emission: UIImage?,
+        normal: UIImage?,
+        position: SCNVector3) -> SCNNode
+    {
+        let planet = SCNNode(geometry: geometry)
+        setDiffuse(diffuse, to: planet)
+        setSpecular(specular, to: planet)
+        setEmission(emission, to: planet)
+        setNormal(normal, to: planet)
+        planet.position = position
+        return planet
+    }
+
+}
+
 // MARK: - Helpers
 
-extension ViewController {
+private extension ViewController {
 
     func setDiffuse(_ color: UIColor, to node: SCNNode) {
         node.geometry?.firstMaterial?.diffuse.contents = color
@@ -184,6 +285,28 @@ extension ViewController {
 
     func setSpecular(_ color: UIColor, to node: SCNNode) {
         node.geometry?.firstMaterial?.specular.contents = color
+    }
+
+    func setDiffuse(_ image: UIImage?, to node: SCNNode) {
+        node.geometry?.firstMaterial?.diffuse.contents = image
+    }
+
+    func setSpecular(_ image: UIImage?, to node: SCNNode) {
+        node.geometry?.firstMaterial?.specular.contents = image
+    }
+
+    func setEmission(_ image: UIImage?, to node: SCNNode) {
+        node.geometry?.firstMaterial?.emission.contents = image
+    }
+
+    func setNormal(_ image: UIImage?, to node: SCNNode) {
+        node.geometry?.firstMaterial?.normal.contents = image
+    }
+
+    func makeForeverRotation(z: CGFloat = 0, duration: TimeInterval) -> SCNAction {
+        let rotation = SCNAction.rotateBy(x: 0, y: CGFloat(360.degreesToRadians), z: z, duration: duration)
+        let foreverRotation = SCNAction.repeatForever(rotation)
+        return foreverRotation
     }
 
     func randomNumber(_ first: CGFloat, _ second: CGFloat) -> CGFloat {
