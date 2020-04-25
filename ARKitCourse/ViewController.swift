@@ -23,7 +23,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var rightButton: UIButton!
     @IBOutlet weak var middleButton: UIButton!
 
-    private var currentSection = Section.section3
+    private var currentSection = Section.section4
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -70,7 +70,7 @@ private extension ViewController {
         case .section3:
             configureSection3(isHidden: false)
         case .section4:
-            break
+            configureSection4(isHidden: false)
         case .section5:
             break
         case .section6:
@@ -79,16 +79,18 @@ private extension ViewController {
     }
 
     func configureSection3(isHidden: Bool) {
-        middleButton.isHidden = true
+        middleButton.isHidden = !isHidden
         [leftButton, rightButton].forEach { $0?.isHidden = isHidden }
-        guard !isHidden else {
-            return
-        }
-        sceneView.autoenablesDefaultLighting = true
+        sceneView.autoenablesDefaultLighting = !isHidden
     }
+
     func configureSection4(isHidden: Bool) {
-        
+        [leftButton, rightButton].forEach { $0?.isHidden = !isHidden }
+        middleButton.isHidden = isHidden
+        self.sceneView.showsStatistics = !isHidden
+        self.sceneView.delegate = self
     }
+
     func configureSection5(isHidden: Bool) {
         
     }
@@ -135,6 +137,43 @@ private extension ViewController {
 
 }
 
+// MARK: - ARSCNViewDelegate
+
+extension ViewController: ARSCNViewDelegate {
+
+    func renderer(_ renderer: SCNSceneRenderer, willRenderScene scene: SCNScene, atTime time: TimeInterval) {
+        guard let pointOfView = sceneView.pointOfView else {
+            return
+        }
+        let transform = pointOfView.transform
+        let orientation = SCNVector3(-transform.m31,-transform.m32,-transform.m33)
+        let location = SCNVector3(transform.m41,transform.m42,transform.m43)
+        let frontOfCamera = orientation + location
+        DispatchQueue.main.async { [weak self] in
+            if self?.middleButton.isHighlighted == true {
+                let sphereNode = SCNNode(geometry: SCNSphere(radius: 0.02))
+                sphereNode.position = frontOfCamera
+                self?.sceneView.scene.rootNode.addChildNode(sphereNode)
+                self?.setDiffuse(.red, to: sphereNode)
+            }
+            else {
+                let pointer = SCNNode(geometry: SCNSphere(radius: 0.01))
+                pointer.name = "pointer"
+                pointer.position = frontOfCamera
+                self?.sceneView.scene.rootNode.enumerateChildNodes({ (node, _) in
+                    if node.name == "pointer" {
+                    node.removeFromParentNode()
+                    }
+                })
+                self?.sceneView.scene.rootNode.addChildNode(pointer)
+                self?.setDiffuse(.red, to: pointer)
+            }
+
+        }
+    }
+
+}
+
 // MARK: - Helpers
 
 extension ViewController {
@@ -160,3 +199,8 @@ extension Int {
     }
 }
 
+func +(left: SCNVector3, right: SCNVector3) -> SCNVector3 {
+
+    return SCNVector3Make(left.x + right.x, left.y + right.y, left.z + right.z)
+
+}
