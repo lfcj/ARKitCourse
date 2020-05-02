@@ -164,11 +164,17 @@ private extension ViewController {
         guard !isHidden else {
             return
         }
+        sceneView.autoenablesDefaultLighting = true
         collectionView.dataSource = self
         collectionView.delegate = self
         configuration.planeDetection = .horizontal
 
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleIkeaTap))
+        let pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture))
+        let longPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(rotateNode))
+        longPressGestureRecognizer.minimumPressDuration = 0.1
+        sceneView.addGestureRecognizer(longPressGestureRecognizer)
+        sceneView.addGestureRecognizer(pinchGestureRecognizer)
         sceneView.addGestureRecognizer(tapGestureRecognizer)
     }
 
@@ -186,17 +192,21 @@ extension ViewController: ARSCNViewDelegate {
     }
 
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-        guard .section7 == currentSection else {
-            return
+        switch currentSection {
+        case .section7:
+            handleLavaPlaneDidAdd(node: node, for: anchor)
+        case .section8:
+            handleIKEAPlaneDidAdd(node: node, for: anchor)
+        default:
+            break
         }
-        handlePlaneDidAdd(node: node, for: anchor)
     }
 
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
         guard .section7 == currentSection else {
             return
         }
-        handlePlaneDidUpdate(node: node, for: anchor)
+        handleLavaPlaneDidUpdate(node: node, for: anchor)
     }
 
     /// It is called when the device makes a mistake and adds something it should have not
@@ -204,8 +214,9 @@ extension ViewController: ARSCNViewDelegate {
         guard .section7 == currentSection else {
             return
         }
-        handlePlaneDidRemove(node: node, for: anchor)
+        handleLavaPlaneDidRemove(node: node, for: anchor)
     }
+
 }
 
 // MARK: - Section 3 - House
@@ -462,7 +473,7 @@ private extension ViewController {
 
 private extension ViewController {
 
-    func handlePlaneDidAdd(node: SCNNode, for anchor: ARAnchor) {
+    func handleLavaPlaneDidAdd(node: SCNNode, for anchor: ARAnchor) {
         guard let planeAnchor = anchor as? ARPlaneAnchor else {
             return
         }
@@ -471,7 +482,7 @@ private extension ViewController {
         node.addChildNode(lavaNode)
     }
 
-    func handlePlaneDidUpdate(node: SCNNode, for anchor: ARAnchor) {
+    func handleLavaPlaneDidUpdate(node: SCNNode, for anchor: ARAnchor) {
         guard let planeAnchor = anchor as? ARPlaneAnchor else {
             return
         }
@@ -484,7 +495,7 @@ private extension ViewController {
         node.addChildNode(lavaNode)
     }
 
-    func handlePlaneDidRemove(node: SCNNode, for anchor: ARAnchor) {
+    func handleLavaPlaneDidRemove(node: SCNNode, for anchor: ARAnchor) {
         guard anchor is ARPlaneAnchor else {
             return
         }
@@ -554,6 +565,23 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate {
         addIkeaItem(hitTestResult: hitTest.first!)
     }
 
+    @objc func handlePinchGesture(sender: UIPinchGestureRecognizer) {
+        guard let sceneView = sender.view as? ARSCNView else {
+            return
+        }
+        let pinchLocation = sender.location(in: sceneView)
+        let hitTest = sceneView.hitTest(pinchLocation)
+        guard !hitTest.isEmpty else {
+            return
+        }
+        let results = hitTest.first!
+        let node = results.node
+        // sender.scale at which user is pinching node
+        let pinchAction = SCNAction.scale(by: sender.scale, duration: 0)
+        node.runAction(pinchAction)
+        sender.scale = 1.0
+    }
+
     func addIkeaItem(hitTestResult: ARHitTestResult) {
         guard let selectedIkeaItem = selectedIkeaItem else {
             return
@@ -565,7 +593,43 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate {
         let transform = hitTestResult.worldTransform
         let thirdColumn = transform.columns.3
         node.position = SCNVector3(thirdColumn.x, thirdColumn.y, thirdColumn.z)
+        if selectedIkeaItem == "table" {
+            centerPivot(for: node)
+        }
         sceneView.scene.rootNode.addChildNode(node)
+    }
+
+    func handleIKEAPlaneDidAdd(node: SCNNode, for anchor: ARAnchor) {
+        guard anchor is ARPlaneAnchor else {
+            return
+        }
+        DispatchQueue.main.async { [weak self] in
+            self?.topLabel.isHidden = false
+            self?.topLabel.text = "Plane detected"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: { [weak self] in
+                self?.topLabel.isHidden = true
+            })
+        }
+    }
+
+    @objc func rotateNode(sender: UILongPressGestureRecognizer) {
+        guard let sceneView = sender.view as? ARSCNView else {
+            return
+        }
+        let holdLocation = sender.location(in: sceneView)
+        let hitTest = sceneView.hitTest(holdLocation)
+        guard !hitTest.isEmpty else {
+            return
+        }
+        let results = hitTest.first!
+        let node = results.node
+        if sender.state == .began {
+            let action = SCNAction.rotateBy(x: 0, y: CGFloat(360.degreesToRadians), z: 0, duration: 1)
+            let foreverAction = SCNAction.repeatForever(action)
+            node.runAction(foreverAction)
+        } else if sender.state == .ended {
+            node.removeAllActions()
+        }
     }
 
 }
@@ -604,6 +668,15 @@ private extension ViewController {
         return foreverRotation
     }
 
+    func centerPivot(for node: SCNNode) {
+        let min = node.boundingBox.min
+        let max = node.boundingBox.max
+        node.pivot = SCNMatrix4MakeTranslation(
+            min.x + (max.x - min.x)/2,
+            min.y + (max.y - min.y)/2,
+            min.z + (max.z - min.z)/2)
+    }
+
     func makeRandomNumber(_ first: CGFloat, _ second: CGFloat) -> CGFloat {
         return CGFloat(arc4random()) / CGFloat(UINT32_MAX) * abs(first - second) + min(first, second)
     }
@@ -623,6 +696,14 @@ extension Int {
         Double(self) * .pi/180
     }
 }
+
+extension Double {
+
+    var degreesToRadians: Double {
+        self * .pi/180
+    }
+}
+
 
 func +(left: SCNVector3, right: SCNVector3) -> SCNVector3 {
 
