@@ -14,29 +14,35 @@ class ViewController: UIViewController {
         case section5
         // Jellyfish
         case section6
+        // Plane detection
+        case section7
+        // Ikea
+        case section8
     }
 
     // MARK: - Outlets
 
-    @IBOutlet weak var sceneView: ARSCNView!
-    @IBOutlet weak var leftButton: UIButton!
-    @IBOutlet weak var rightButton: UIButton!
-    @IBOutlet weak var middleButton: UIButton!
-    @IBOutlet weak var topLabel: UILabel!
+    @IBOutlet private var sceneView: ARSCNView!
+    @IBOutlet private var leftButton: UIButton!
+    @IBOutlet private var rightButton: UIButton!
+    @IBOutlet private var middleButton: UIButton!
+    @IBOutlet private var topLabel: UILabel!
+    @IBOutlet private var collectionView: UICollectionView!
+    @IBOutlet private var sceneViewBottomToCollectionViewConstraint: NSLayoutConstraint!
 
     // MARK: - Properties
 
-    private let currentSection = Section.section6
+    private let currentSection = Section.section8
     private let configuration = ARWorldTrackingConfiguration()
     private let jellyFishNodeName = "Jellyfish"
     private var countdown = 10
     private var timer: Timer?
+    private let ikeaItems: [String] = ["cup", "vase", "boxing", "table"]
+    private var selectedIkeaItem: String?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints, ARSCNDebugOptions.showWorldOrigin]
-        sceneView.session.run(configuration)
-
         configureCurrentSection()
     }
 
@@ -89,6 +95,8 @@ private extension ViewController {
         configureSection4(isHidden: true)
         configureSection5(isHidden: true)
         configureSection6(isHidden: true)
+        configureSection7(isHidden: true)
+        configureSection8(isHidden: true)
 
         switch currentSection {
         case .section3:
@@ -99,11 +107,15 @@ private extension ViewController {
             configureSection5(isHidden: false)
         case .section6:
             configureSection6(isHidden: false)
+        case .section7:
+            configureSection7(isHidden: false)
+        case .section8:
+            configureSection8(isHidden: false)
         }
+        sceneView.session.run(configuration)
     }
 
     func configureSection3(isHidden: Bool) {
-        middleButton.isHidden = !isHidden
         [leftButton, rightButton].forEach { $0?.isHidden = isHidden }
         sceneView.autoenablesDefaultLighting = !isHidden
     }
@@ -111,16 +123,15 @@ private extension ViewController {
     func configureSection4(isHidden: Bool) {
         [leftButton, rightButton].forEach { $0?.isHidden = !isHidden }
         middleButton.isHidden = isHidden
-        self.sceneView.showsStatistics = !isHidden
-        self.sceneView.delegate = self
+        sceneView.showsStatistics = !isHidden
+        sceneView.delegate = self
     }
 
     func configureSection5(isHidden: Bool) {
         sceneView.autoenablesDefaultLighting = !isHidden
-        [leftButton, rightButton, middleButton].forEach { $0?.isHidden = !isHidden}
+        [leftButton, rightButton].forEach { $0?.isHidden = !isHidden}
     }
     func configureSection6(isHidden: Bool) {
-        middleButton.isHidden = !isHidden
         topLabel.isHidden = isHidden
         [leftButton, rightButton].forEach { $0?.isHidden = isHidden }
         guard !isHidden else {
@@ -137,6 +148,63 @@ private extension ViewController {
 
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleJellyfishTap))
         sceneView.addGestureRecognizer(tapGestureRecognizer)
+    }
+
+    func configureSection7(isHidden: Bool) {
+        guard !isHidden else {
+            return
+        }
+        configuration.planeDetection = .horizontal
+        sceneView.delegate = self
+    }
+
+    func configureSection8(isHidden: Bool) {
+        collectionView.isHidden = isHidden
+        sceneViewBottomToCollectionViewConstraint.isActive = !isHidden
+        guard !isHidden else {
+            return
+        }
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        configuration.planeDetection = .horizontal
+
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleIkeaTap))
+        sceneView.addGestureRecognizer(tapGestureRecognizer)
+    }
+
+}
+
+// MARK: - ARSCNViewDelegate
+
+extension ViewController: ARSCNViewDelegate {
+
+    func renderer(_ renderer: SCNSceneRenderer, willRenderScene scene: SCNScene, atTime time: TimeInterval) {
+        guard .section4 == currentSection else {
+            return
+        }
+        renderDrawing()
+    }
+
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        guard .section7 == currentSection else {
+            return
+        }
+        handlePlaneDidAdd(node: node, for: anchor)
+    }
+
+    func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
+        guard .section7 == currentSection else {
+            return
+        }
+        handlePlaneDidUpdate(node: node, for: anchor)
+    }
+
+    /// It is called when the device makes a mistake and adds something it should have not
+    func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
+        guard .section7 == currentSection else {
+            return
+        }
+        handlePlaneDidRemove(node: node, for: anchor)
     }
 }
 
@@ -180,14 +248,11 @@ private extension ViewController {
 
 }
 
-// MARK: - ARSCNViewDelegate + Section 4 - Drawing
+// MARK: - Section 4 - Drawing
 
-extension ViewController: ARSCNViewDelegate {
+extension ViewController {
 
-    func renderer(_ renderer: SCNSceneRenderer, willRenderScene scene: SCNScene, atTime time: TimeInterval) {
-        guard .section4 == currentSection else {
-            return
-        }
+    func renderDrawing() {
         guard let pointOfView = sceneView.pointOfView else {
             return
         }
@@ -393,6 +458,118 @@ private extension ViewController {
 
 }
 
+// MARK: - Section 7 - Plane Detection
+
+private extension ViewController {
+
+    func handlePlaneDidAdd(node: SCNNode, for anchor: ARAnchor) {
+        guard let planeAnchor = anchor as? ARPlaneAnchor else {
+            return
+        }
+        print ("New plane service detected, new ARPlaneAnchor added")
+        let lavaNode = makeLavaNode(for: planeAnchor)
+        node.addChildNode(lavaNode)
+    }
+
+    func handlePlaneDidUpdate(node: SCNNode, for anchor: ARAnchor) {
+        guard let planeAnchor = anchor as? ARPlaneAnchor else {
+            return
+        }
+        print ("Updating floor's anchor")
+        node.enumerateChildNodes { (childNode, _) in
+            // Have to remove it cuz we want to update the anchor size and it is a let constant
+            childNode.removeFromParentNode()
+        }
+        let lavaNode = makeLavaNode(for: planeAnchor)
+        node.addChildNode(lavaNode)
+    }
+
+    func handlePlaneDidRemove(node: SCNNode, for anchor: ARAnchor) {
+        guard anchor is ARPlaneAnchor else {
+            return
+        }
+        node.enumerateChildNodes { (childNode, _) in
+            // Remove lava node
+            childNode.removeFromParentNode()
+        }
+    }
+
+    func makeLavaNode(for planeAnchor: ARPlaneAnchor) -> SCNNode {
+        let lavaNode = SCNNode(geometry: SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z)))
+        setDiffuse(#imageLiteral(resourceName: "lava"), to: lavaNode)
+        lavaNode.position = planeAnchor.position
+        // Make sure one can see the lava from both sides
+        lavaNode.geometry?.firstMaterial?.isDoubleSided = true
+        lavaNode.eulerAngles = SCNVector3(90.degreesToRadians, 0, 0)
+        return lavaNode
+    }
+
+}
+
+// MARK: - Section 8 - IKEA
+
+extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate {
+
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return 1
+    }
+
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return ikeaItems.count
+    }
+
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "item", for: indexPath) as! IkeaItemCollectionViewCell
+        cell.configure(itemName: ikeaItems[indexPath.row])
+        return cell
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let cell = collectionView.cellForItem(at: indexPath) else {
+            return
+        }
+        selectedIkeaItem = ikeaItems[indexPath.row]
+        cell.backgroundColor = .systemGreen
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+        guard let cell = collectionView.cellForItem(at: indexPath) else {
+            return
+        }
+        selectedIkeaItem = nil
+        cell.backgroundColor = .systemOrange
+    }
+
+    @objc func handleIkeaTap(sender: UITapGestureRecognizer) {
+        guard let sceneView = sender.view as? ARSCNView else {
+            return
+        }
+        // where did user tap?
+        let tapLocation = sender.location(in: sceneView)
+        // Does location match location of horizontal plane?
+        let hitTest = sceneView.hitTest(tapLocation, types: .existingPlaneUsingExtent)
+        guard !hitTest.isEmpty else {
+            return
+        }
+        addIkeaItem(hitTestResult: hitTest.first!)
+    }
+
+    func addIkeaItem(hitTestResult: ARHitTestResult) {
+        guard let selectedIkeaItem = selectedIkeaItem else {
+            return
+        }
+        let scene = SCNScene(named: "art.scnassets/\(selectedIkeaItem).scn")
+        guard let node = scene?.rootNode.childNode(withName: selectedIkeaItem, recursively: false) else {
+            return
+        }
+        let transform = hitTestResult.worldTransform
+        let thirdColumn = transform.columns.3
+        node.position = SCNVector3(thirdColumn.x, thirdColumn.y, thirdColumn.z)
+        sceneView.scene.rootNode.addChildNode(node)
+    }
+
+}
+
 // MARK: - Helpers
 
 private extension ViewController {
@@ -451,4 +628,14 @@ func +(left: SCNVector3, right: SCNVector3) -> SCNVector3 {
 
     return SCNVector3Make(left.x + right.x, left.y + right.y, left.z + right.z)
 
+}
+
+extension ARPlaneAnchor {
+
+    var position: SCNVector3 {
+        return SCNVector3(
+            center.x,
+            center.y,
+            center.z)
+    }
 }
