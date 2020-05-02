@@ -22,12 +22,15 @@ class ViewController: UIViewController {
     @IBOutlet weak var leftButton: UIButton!
     @IBOutlet weak var rightButton: UIButton!
     @IBOutlet weak var middleButton: UIButton!
+    @IBOutlet weak var topLabel: UILabel!
 
     // MARK: - Properties
 
     private let currentSection = Section.section6
     private let configuration = ARWorldTrackingConfiguration()
-    private let countdown = 10
+    private let jellyFishNodeName = "Jellyfish"
+    private var countdown = 10
+    private var timer: Timer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -49,7 +52,9 @@ class ViewController: UIViewController {
         case .section3:
             makeHouse()
         case .section6:
+            setTimer()
             addJellyfish()
+            leftButton.isEnabled = false
         default:
             break
         }
@@ -60,8 +65,14 @@ class ViewController: UIViewController {
 
     @IBAction func didTapRightButton(_ sender: Any) {
         switch currentSection {
-        case .section3, .section6:
+        case .section3:
             restartSession()
+        case .section6:
+            timer?.invalidate()
+            timer = nil
+            resetJellyfishLabel()
+            restartSession(nodeName: jellyFishNodeName)
+            leftButton.isEnabled = true
         default:
             break
         }
@@ -110,6 +121,7 @@ private extension ViewController {
     }
     func configureSection6(isHidden: Bool) {
         middleButton.isHidden = !isHidden
+        topLabel.isHidden = isHidden
         [leftButton, rightButton].forEach { $0?.isHidden = isHidden }
         guard !isHidden else {
             return
@@ -121,6 +133,8 @@ private extension ViewController {
         }
         leftButton.setImage(#imageLiteral(resourceName: "Play"), for: .normal)
         rightButton.setImage(#imageLiteral(resourceName: "Reset"), for: .normal)
+        resetJellyfishLabel()
+
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleJellyfishTap))
         sceneView.addGestureRecognizer(tapGestureRecognizer)
     }
@@ -154,11 +168,13 @@ private extension ViewController {
         boxNode.addChildNode(doorNode)
     }
 
-    func restartSession() {
-        sceneView.session.pause()
+    func restartSession(nodeName: String? = nil) {
         self.sceneView.scene.rootNode.enumerateChildNodes { (node, _) in
-            node.removeFromParentNode()
+            if nodeName == nil || nodeName == node.name {
+                node.removeFromParentNode()
+            }
         }
+        sceneView.session.pause()
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
     }
 
@@ -305,12 +321,73 @@ private extension ViewController {
 
     func addJellyfish() {
         let jellyFishScene = SCNScene(named: "art.scnassets/Jellyfish.scn")
-        let jellyfishNode = jellyFishScene?.rootNode.childNode(withName: "Jellyfish", recursively: false)
+        let jellyfishNode = jellyFishScene?.rootNode.childNode(withName: jellyFishNodeName, recursively: false)
         jellyfishNode?.position = makeRandomVector()
         sceneView.scene.rootNode.addChildNode(jellyfishNode!)
     }
 
-    @objc func handleJellyfishTap(sender: UITapGestureRecognizer)
+    @objc func handleJellyfishTap(sender: UITapGestureRecognizer) {
+        let sceneViewTappedOn = sender.view as! SCNView
+        let touchCoordinates = sender.location(in: sceneViewTappedOn)
+        let hitTest = sceneViewTappedOn.hitTest(touchCoordinates)
+        if hitTest.isEmpty {
+            print("didn't touch anything")
+        } else if countdown > 0 {
+            let results = hitTest.first!
+            let node = results.node
+
+            guard node.animationKeys.isEmpty else {
+                return
+            }
+
+            SCNTransaction.begin()
+            self.animateNode(node: node)
+            SCNTransaction.completionBlock = { [weak self] in
+                node.removeFromParentNode()
+                self?.addJellyfish()
+                self?.restoreTimer()
+            }
+            SCNTransaction.commit()
+        }
+    }
+
+    func animateNode(node: SCNNode) {
+        let spin = CABasicAnimation(keyPath: "position")
+        spin.fromValue = node.presentation.position
+        spin.toValue = SCNVector3(
+            node.presentation.position.x - 0.2,
+            node.presentation.position.y - 0.2 ,
+            node.presentation.position.z - 0.2)
+        spin.duration = 0.07
+        spin.autoreverses = true
+        spin.repeatCount = 5
+        node.addAnimation(spin, forKey: "position")
+    }
+
+    func setTimer() {
+        countdown = 10
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            guard let self = self else {
+                return
+            }
+            self.countdown -= 1
+            self.topLabel.text = String(self.countdown)
+
+            if self.countdown <= 0 {
+                self.topLabel.text = "You lose"
+                timer.invalidate()
+            }
+        }
+    }
+
+    func restoreTimer() {
+        countdown = 10
+        topLabel.text = String(countdown)
+    }
+
+    func resetJellyfishLabel() {
+        topLabel.text = "Start playing"
+    }
 
 }
 
