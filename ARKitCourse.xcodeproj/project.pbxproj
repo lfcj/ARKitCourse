@@ -13,6 +13,9 @@
 		84D455062454B23300073279 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 84D455042454B23300073279 /* Main.storyboard */; };
 		84D455082454B23400073279 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84D455072454B23400073279 /* Assets.xcassets */; };
 		84D4550B2454B23400073279 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 84D455092454B23400073279 /* LaunchScreen.storyboard */; };
+		84D45514245CA77F00073279 /* Jellyfish.png in Resources */ = {isa = PBXBuildFile; fileRef = 84D45513245CA77F00073279 /* Jellyfish.png */; };
+		84D45516245CA7F400073279 /* art.scnassets in Resources */ = {isa = PBXBuildFile; fileRef = 84D45515245CA7F400073279 /* art.scnassets */; };
+		84D45518245CA82100073279 /* Jellyfish.dae in Resources */ = {isa = PBXBuildFile; fileRef = 84D45517245CA82100073279 /* Jellyfish.dae */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +27,9 @@
 		84D455072454B23400073279 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		84D4550A2454B23400073279 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		84D4550C2454B23400073279 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		84D45513245CA77F00073279 /* Jellyfish.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Jellyfish.png; sourceTree = "<group>"; };
+		84D45515245CA7F400073279 /* art.scnassets */ = {isa = PBXFileReference; lastKnownFileType = wrapper.scnassets; path = art.scnassets; sourceTree = "<group>"; };
+		84D45517245CA82100073279 /* Jellyfish.dae */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml.dae; path = Jellyfish.dae; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +62,8 @@
 		84D454FD2454B23300073279 /* ARKitCourse */ = {
 			isa = PBXGroup;
 			children = (
+				84D45517245CA82100073279 /* Jellyfish.dae */,
+				84D45512245CA77300073279 /* Textures */,
 				84D454FE2454B23300073279 /* AppDelegate.swift */,
 				84D455002454B23300073279 /* SceneDelegate.swift */,
 				84D455022454B23300073279 /* ViewController.swift */,
@@ -63,8 +71,17 @@
 				84D455072454B23400073279 /* Assets.xcassets */,
 				84D455092454B23400073279 /* LaunchScreen.storyboard */,
 				84D4550C2454B23400073279 /* Info.plist */,
+				84D45515245CA7F400073279 /* art.scnassets */,
 			);
 			path = ARKitCourse;
+			sourceTree = "<group>";
+		};
+		84D45512245CA77300073279 /* Textures */ = {
+			isa = PBXGroup;
+			children = (
+				84D45513245CA77F00073279 /* Jellyfish.png */,
+			);
+			path = Textures;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -127,6 +144,9 @@
 			files = (
 				84D4550B2454B23400073279 /* LaunchScreen.storyboard in Resources */,
 				84D455082454B23400073279 /* Assets.xcassets in Resources */,
+				84D45516245CA7F400073279 /* art.scnassets in Resources */,
+				84D45518245CA82100073279 /* Jellyfish.dae in Resources */,
+				84D45514245CA77F00073279 /* Jellyfish.png in Resources */,
 				84D455062454B23300073279 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -25,7 +25,9 @@
                                     <constraint firstAttribute="width" secondItem="XCW-T9-ccL" secondAttribute="height" multiplier="1:1" id="CN6-sp-fOY"/>
                                     <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="80" id="mlh-fV-kjz"/>
                                 </constraints>
-                                <state key="normal" title="Add"/>
+                                <state key="normal" title="Add">
+                                    <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                </state>
                                 <connections>
                                     <action selector="didTapLeftButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="pcc-DQ-GEJ"/>
                                 </connections>

@@ -16,14 +16,18 @@ class ViewController: UIViewController {
         case section6
     }
 
-    let configuration = ARWorldTrackingConfiguration()
+    // MARK: - Outlets
 
     @IBOutlet weak var sceneView: ARSCNView!
     @IBOutlet weak var leftButton: UIButton!
     @IBOutlet weak var rightButton: UIButton!
     @IBOutlet weak var middleButton: UIButton!
 
-    private var currentSection = Section.section5
+    // MARK: - Properties
+
+    private let currentSection = Section.section6
+    private let configuration = ARWorldTrackingConfiguration()
+    private let countdown = 10
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -44,7 +48,10 @@ class ViewController: UIViewController {
         switch currentSection {
         case .section3:
             makeHouse()
-        default: break
+        case .section6:
+            addJellyfish()
+        default:
+            break
         }
     }
 
@@ -53,9 +60,10 @@ class ViewController: UIViewController {
 
     @IBAction func didTapRightButton(_ sender: Any) {
         switch currentSection {
-        case .section3:
+        case .section3, .section6:
             restartSession()
-        default: break
+        default:
+            break
         }
     }
 
@@ -79,7 +87,7 @@ private extension ViewController {
         case .section5:
             configureSection5(isHidden: false)
         case .section6:
-            break
+            configureSection6(isHidden: false)
         }
     }
 
@@ -101,7 +109,20 @@ private extension ViewController {
         [leftButton, rightButton, middleButton].forEach { $0?.isHidden = !isHidden}
     }
     func configureSection6(isHidden: Bool) {
-        
+        middleButton.isHidden = !isHidden
+        [leftButton, rightButton].forEach { $0?.isHidden = isHidden }
+        guard !isHidden else {
+            return
+        }
+        [leftButton, rightButton].forEach { button in
+            button?.setTitle(nil, for: .normal)
+            button?.backgroundColor = nil
+            button?.tintColor = nil
+        }
+        leftButton.setImage(#imageLiteral(resourceName: "Play"), for: .normal)
+        rightButton.setImage(#imageLiteral(resourceName: "Reset"), for: .normal)
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleJellyfishTap))
+        sceneView.addGestureRecognizer(tapGestureRecognizer)
     }
 }
 
@@ -148,6 +169,9 @@ private extension ViewController {
 extension ViewController: ARSCNViewDelegate {
 
     func renderer(_ renderer: SCNSceneRenderer, willRenderScene scene: SCNScene, atTime time: TimeInterval) {
+        guard .section4 == currentSection else {
+            return
+        }
         guard let pointOfView = sceneView.pointOfView else {
             return
         }
@@ -236,7 +260,7 @@ private extension ViewController {
     func makeSun() -> SCNNode {
         let sun = SCNNode(geometry: SCNSphere(radius: 0.35))
         setDiffuse(#imageLiteral(resourceName: "Sun diffuse"), to: sun)
-        sun.position = SCNVector3(0,0,-1)
+        sun.position = SCNVector3(0,0,-2)
         sun.runAction(makeForeverRotation(duration: 8))
         return sun
     }
@@ -275,6 +299,21 @@ private extension ViewController {
 
 }
 
+// MARK: - Section 6 - Jellyfish
+
+private extension ViewController {
+
+    func addJellyfish() {
+        let jellyFishScene = SCNScene(named: "art.scnassets/Jellyfish.scn")
+        let jellyfishNode = jellyFishScene?.rootNode.childNode(withName: "Jellyfish", recursively: false)
+        jellyfishNode?.position = makeRandomVector()
+        sceneView.scene.rootNode.addChildNode(jellyfishNode!)
+    }
+
+    @objc func handleJellyfishTap(sender: UITapGestureRecognizer)
+
+}
+
 // MARK: - Helpers
 
 private extension ViewController {
@@ -309,8 +348,15 @@ private extension ViewController {
         return foreverRotation
     }
 
-    func randomNumber(_ first: CGFloat, _ second: CGFloat) -> CGFloat {
+    func makeRandomNumber(_ first: CGFloat, _ second: CGFloat) -> CGFloat {
         return CGFloat(arc4random()) / CGFloat(UINT32_MAX) * abs(first - second) + min(first, second)
+    }
+
+    func makeRandomVector() -> SCNVector3 {
+        return SCNVector3(
+            makeRandomNumber(-1, 1),
+            makeRandomNumber(-0.5, 0.5),
+            makeRandomNumber(-1, 1))
     }
 
 }
