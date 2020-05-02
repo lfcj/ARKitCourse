@@ -340,6 +340,8 @@ private extension ViewController {
                 return
             }
 
+            // The SCNTransaction makes sure that the animation is completed
+            // before the jellyfish is removed
             SCNTransaction.begin()
             self.animateNode(node: node)
             SCNTransaction.completionBlock = { [weak self] in
