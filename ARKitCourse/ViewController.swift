@@ -755,18 +755,27 @@ private extension ViewController {
         let orientation = SCNVector3(-transform.m31, -transform.m32, -transform.m33)
         let location = SCNVector3(transform.m41, transform.m42, -transform.m43)
         let positionInFrontOfCamera = orientation + location
-        let box = SCNNode(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0))
-        setDiffuse(.blue, to: box)
 
-        // make box fall
+        guard
+            let scene = SCNScene(named: "car-scene.scn"),
+            let carFrameNode = scene.rootNode.childNode(withName: "frame", recursively: false)
+        else {
+            return
+        }
+
+        // make car fall
         let body = SCNPhysicsBody(
             type: .dynamic, // we want it to be affected by forces
-            shape: SCNPhysicsShape(geometry: box.geometry!, options: [SCNPhysicsShape.Option.keepAsCompound: true])) // true for when we have more shapes
-        box.physicsBody = body
-        box.position = positionInFrontOfCamera
-        box.name = "vehicle"
+            shape: SCNPhysicsShape(
+                node: carFrameNode,
+                options: [SCNPhysicsShape.Option.keepAsCompound: true])) // true for when we have more shapes
+        carFrameNode.physicsBody = body
+        carFrameNode.position = positionInFrontOfCamera
+
+        carFrameNode.name = "vehicle"
         rootNodeChildrenNames.append("vehicle")
-        sceneView.scene.rootNode.addChildNode(box)
+
+        sceneView.scene.rootNode.addChildNode(carFrameNode)
     }
 
     func makeConcreteNode(for anchor: ARAnchor) -> SCNNode? {
