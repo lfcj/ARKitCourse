@@ -5,7 +5,7 @@ class ViewController: UIViewController {
 
     // MARK: - Nested Types
 
-    enum Section {
+    enum Section: CaseIterable {
         // Fundamentals + makeHouse
         case section3
         // Draw app
@@ -14,15 +14,37 @@ class ViewController: UIViewController {
         case section5
         // Jellyfish
         case section6
-        // Plane detection
+        // Lava Floor
         case section7
         // Ikea
         case section8
+        // Vehicle
+        case section9
+
+        var name: String {
+            switch self {
+            case .section3:
+                return "Make House"
+            case .section4:
+                return "Drawing app"
+            case .section5:
+                return "Solar System"
+            case .section6:
+                return "Jellyfish game"
+            case .section7:
+                return "Floor is lava"
+            case .section8:
+                return "Ikea"
+            case .section9:
+                return "Vehicle"
+            }
+        }
     }
 
     // MARK: - Outlets
 
     @IBOutlet private var sceneView: ARSCNView!
+    @IBOutlet private var sectionPickerView: UIPickerView!
     @IBOutlet private var leftButton: UIButton!
     @IBOutlet private var rightButton: UIButton!
     @IBOutlet private var middleButton: UIButton!
@@ -32,10 +54,16 @@ class ViewController: UIViewController {
 
     // MARK: - Properties
 
-    private let currentSection = Section.section8
     private let configuration = ARWorldTrackingConfiguration()
-    private let jellyFishNodeName = "Jellyfish"
+    private var currentSection = Section.section9 {
+        didSet {
+            configureCurrentSection()
+            restartSession()
+            makeSolarSystem()
+        }
+    }
     private var countdown = 10
+    private var rootNodeChildrenNames = [String]()
     private var timer: Timer?
     private let ikeaItems: [String] = ["cup", "vase", "boxing", "table"]
     private var selectedIkeaItem: String?
@@ -43,7 +71,12 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints, ARSCNDebugOptions.showWorldOrigin]
+        sectionPickerView.dataSource = self
+        sectionPickerView.delegate = self
         configureCurrentSection()
+        if let sectionIndex = Section.allCases.firstIndex(of: currentSection) {
+            sectionPickerView.selectRow(sectionIndex, inComponent: 0, animated: true)
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -61,6 +94,8 @@ class ViewController: UIViewController {
             setTimer()
             addJellyfish()
             leftButton.isEnabled = false
+        case .section9:
+            addCar()
         default:
             break
         }
@@ -71,13 +106,13 @@ class ViewController: UIViewController {
 
     @IBAction func didTapRightButton(_ sender: Any) {
         switch currentSection {
-        case .section3:
+        case .section3, .section9:
             restartSession()
         case .section6:
             timer?.invalidate()
             timer = nil
             resetJellyfishLabel()
-            restartSession(nodeName: jellyFishNodeName)
+            restartSession()
             leftButton.isEnabled = true
         default:
             break
@@ -97,6 +132,7 @@ private extension ViewController {
         configureSection6(isHidden: true)
         configureSection7(isHidden: true)
         configureSection8(isHidden: true)
+        configureSection9(isHidden: true)
 
         switch currentSection {
         case .section3:
@@ -111,12 +147,20 @@ private extension ViewController {
             configureSection7(isHidden: false)
         case .section8:
             configureSection8(isHidden: false)
+        case .section9:
+            configureSection9(isHidden: false)
         }
         sceneView.session.run(configuration)
     }
 
     func configureSection3(isHidden: Bool) {
         [leftButton, rightButton].forEach { $0?.isHidden = isHidden }
+        guard !isHidden else {
+            return
+        }
+        leftButton.setImage(nil, for: .normal)
+        rightButton.setImage(nil, for: .normal)
+        
         sceneView.autoenablesDefaultLighting = !isHidden
     }
 
@@ -178,6 +222,17 @@ private extension ViewController {
         sceneView.addGestureRecognizer(tapGestureRecognizer)
     }
 
+    func configureSection9(isHidden: Bool) {
+        [leftButton, rightButton].forEach { $0?.isHidden = isHidden }
+        guard !isHidden else {
+            return
+        }
+        leftButton.setImage(nil, for: .normal)
+        rightButton.setImage(nil, for: .normal)
+        configuration.planeDetection = .horizontal
+        sceneView.delegate = self
+    }
+
 }
 
 // MARK: - ARSCNViewDelegate
@@ -193,7 +248,7 @@ extension ViewController: ARSCNViewDelegate {
 
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         switch currentSection {
-        case .section7:
+        case .section7, .section9:
             handleLavaPlaneDidAdd(node: node, for: anchor)
         case .section8:
             handleIKEAPlaneDidAdd(node: node, for: anchor)
@@ -203,20 +258,50 @@ extension ViewController: ARSCNViewDelegate {
     }
 
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
+        switch currentSection {
+        case .section7, .section9:
+            handleLavaPlaneDidUpdate(node: node, for: anchor)
+        default:
+            break
+        }
         guard .section7 == currentSection else {
             return
         }
-        handleLavaPlaneDidUpdate(node: node, for: anchor)
+        
     }
 
     /// It is called when the device makes a mistake and adds something it should have not
     func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
-        guard .section7 == currentSection else {
-            return
+        switch currentSection {
+        case .section7, .section9:
+            handleLavaPlaneDidRemove(node: node, for: anchor)
+        default:
+            break
         }
-        handleLavaPlaneDidRemove(node: node, for: anchor)
     }
 
+}
+
+// MARK: - UIPickerViewDataSource & UIPickerViewDelegate
+
+extension ViewController: UIPickerViewDataSource, UIPickerViewDelegate {
+
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        1
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return Section.allCases.count
+    }
+
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        return Section.allCases[row].name
+    }
+
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        currentSection =  Section.allCases[row]
+    }
+    
 }
 
 // MARK: - Section 3 - House
@@ -242,14 +327,17 @@ private extension ViewController {
         boxNode.position = SCNVector3(0, -0.05, 0)
         doorNode.position = SCNVector3(0,-0.02,0.053)
 
+        node.name = "house-roof"
+        rootNodeChildrenNames.append("house-roof")
+
         sceneView.scene.rootNode.addChildNode(node)
         node.addChildNode(boxNode)
         boxNode.addChildNode(doorNode)
     }
 
-    func restartSession(nodeName: String? = nil) {
+    func restartSession() {
         self.sceneView.scene.rootNode.enumerateChildNodes { (node, _) in
-            if nodeName == nil || nodeName == node.name {
+            if let nodeName = node.name, rootNodeChildrenNames.contains(nodeName) {
                 node.removeFromParentNode()
             }
         }
@@ -275,16 +363,21 @@ extension ViewController {
             if self?.middleButton.isHighlighted == true {
                 let sphereNode = SCNNode(geometry: SCNSphere(radius: 0.02))
                 sphereNode.position = frontOfCamera
+
+                sphereNode.name = "drawing-sphere"
+                self?.rootNodeChildrenNames.append("drawing-sphere")
+
                 self?.sceneView.scene.rootNode.addChildNode(sphereNode)
                 self?.setDiffuse(.red, to: sphereNode)
             }
             else {
                 let pointer = SCNNode(geometry: SCNSphere(radius: 0.01))
                 pointer.name = "pointer"
+                self?.rootNodeChildrenNames.append("pointer")
                 pointer.position = frontOfCamera
                 self?.sceneView.scene.rootNode.enumerateChildNodes({ (node, _) in
                     if node.name == "pointer" {
-                    node.removeFromParentNode()
+                        node.removeFromParentNode()
                     }
                 })
                 self?.sceneView.scene.rootNode.addChildNode(pointer)
@@ -310,6 +403,12 @@ private extension ViewController {
 
         earth.position = sun.position
         venus.position = sun.position
+
+        sun.name = "sun"
+        earth.name = "earth"
+        venus.name = "venus"
+
+        rootNodeChildrenNames.append(contentsOf: ["sun", "earth", "venus"])
 
         sceneView.scene.rootNode.addChildNode(sun)
         sceneView.scene.rootNode.addChildNode(earth)
@@ -396,9 +495,12 @@ private extension ViewController {
 private extension ViewController {
 
     func addJellyfish() {
+        let jellyFishNodeName = "Jellyfish"
         let jellyFishScene = SCNScene(named: "art.scnassets/Jellyfish.scn")
         let jellyfishNode = jellyFishScene?.rootNode.childNode(withName: jellyFishNodeName, recursively: false)
         jellyfishNode?.position = makeRandomVector()
+        jellyfishNode?.name = jellyFishNodeName
+        rootNodeChildrenNames.append(jellyFishNodeName)
         sceneView.scene.rootNode.addChildNode(jellyfishNode!)
     }
 
@@ -478,8 +580,16 @@ private extension ViewController {
             return
         }
         print ("New plane service detected, new ARPlaneAnchor added")
-        let lavaNode = makeLavaNode(for: planeAnchor)
-        node.addChildNode(lavaNode)
+        let childNode: SCNNode?
+        switch currentSection {
+        case .section7:
+            childNode = makeLavaNode(for: planeAnchor)
+        case .section9:
+            childNode = makeConcreteNode(for: planeAnchor)
+        default:
+            childNode = nil
+        }
+        node.addChildNode(childNode!)
     }
 
     func handleLavaPlaneDidUpdate(node: SCNNode, for anchor: ARAnchor) {
@@ -491,8 +601,16 @@ private extension ViewController {
             // Have to remove it cuz we want to update the anchor size and it is a let constant
             childNode.removeFromParentNode()
         }
-        let lavaNode = makeLavaNode(for: planeAnchor)
-        node.addChildNode(lavaNode)
+        let childNode: SCNNode?
+        switch currentSection {
+        case .section7:
+            childNode = makeLavaNode(for: planeAnchor)
+        case .section9:
+            childNode = makeConcreteNode(for: planeAnchor)
+        default:
+            childNode = nil
+        }
+        node.addChildNode(childNode!)
     }
 
     func handleLavaPlaneDidRemove(node: SCNNode, for anchor: ARAnchor) {
@@ -596,6 +714,8 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate {
         if selectedIkeaItem == "table" {
             centerPivot(for: node)
         }
+        node.name = "ikea-item"
+        rootNodeChildrenNames.append("ikea-item")
         sceneView.scene.rootNode.addChildNode(node)
     }
 
@@ -631,6 +751,48 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate {
             node.removeAllActions()
         }
     }
+
+}
+
+// MARK: - Section 9 - Vehicle
+
+private extension ViewController {
+
+    func addCar() {
+        guard let pointOfView = sceneView.pointOfView else {
+            return
+        }
+        let transform = pointOfView.transform
+        let orientation = SCNVector3(-transform.m31, -transform.m32, -transform.m33)
+        let location = SCNVector3(transform.m41, transform.m42, -transform.m43)
+        let positionInFrontOfCamera = orientation + location
+        let box = SCNNode(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0))
+        setDiffuse(.blue, to: box)
+
+        // make box fall
+        let body = SCNPhysicsBody(
+            type: .dynamic, // we want it to be affected by forces
+            shape: SCNPhysicsShape(geometry: box.geometry!, options: [SCNPhysicsShape.Option.keepAsCompound: true])) // true for when we have more shapes
+        box.physicsBody = body
+        box.position = positionInFrontOfCamera
+        box.name = "vehicle"
+        rootNodeChildrenNames.append("vehicle")
+        sceneView.scene.rootNode.addChildNode(box)
+    }
+
+    func makeConcreteNode(for planeAnchor: ARPlaneAnchor) -> SCNNode {
+        let concreteNode = SCNNode(geometry: SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z)))
+        setDiffuse(#imageLiteral(resourceName: "concrete"), to: concreteNode)
+        // Give concrete a physics body
+        let staticBody = SCNPhysicsBody.static() // static is anything that's gonna be fixed in one place. It needs to support other bodies. Gravity won't affect it
+        concreteNode.physicsBody = staticBody
+        concreteNode.position = planeAnchor.position
+        // Make sure one can see the lava from both sides
+        concreteNode.geometry?.firstMaterial?.isDoubleSided = true
+        concreteNode.eulerAngles = SCNVector3(90.degreesToRadians, 0, 0)
+        return concreteNode
+    }
+
 
 }
 

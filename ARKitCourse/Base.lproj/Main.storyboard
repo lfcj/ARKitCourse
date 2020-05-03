@@ -17,7 +17,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="YTN-c8-aP3">
-                                <rect key="frame" x="0.0" y="65" width="414" height="722"/>
+                                <rect key="frame" x="0.0" y="104" width="414" height="683"/>
                             </arscnView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="XCW-T9-ccL">
                                 <rect key="frame" x="20" y="762" width="80" height="80"/>
@@ -57,12 +57,23 @@
                                     <action selector="didTapRightButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Hqz-jh-Yg4"/>
                                 </connections>
                             </button>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tap on play!" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Sgg-SN-GNl">
-                                <rect key="frame" x="0.0" y="44" width="414" height="21"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <nil key="textColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
+                            <stackView opaque="NO" contentMode="scaleToFill" distribution="fillEqually" translatesAutoresizingMaskIntoConstraints="NO" id="4lA-Yg-ahJ">
+                                <rect key="frame" x="0.0" y="44" width="414" height="60"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tap on play!" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Sgg-SN-GNl">
+                                        <rect key="frame" x="0.0" y="0.0" width="207" height="60"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <pickerView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LqP-bk-ECo">
+                                        <rect key="frame" x="207" y="0.0" width="207" height="60"/>
+                                    </pickerView>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="60" id="Haz-rM-v9h"/>
+                                </constraints>
+                            </stackView>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="1gI-v9-h8y">
                                 <rect key="frame" x="0.0" y="787" width="414" height="75"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
@@ -85,7 +96,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Item" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5rh-RZ-xd2">
-                                                    <rect key="frame" x="43" y="14.5" width="34" height="21"/>
+                                                    <rect key="frame" x="43" y="15" width="34" height="20.5"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
@@ -113,18 +124,18 @@
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="gdV-44-I4D" secondAttribute="bottom" constant="20" id="KcU-Fp-gvO"/>
                             <constraint firstAttribute="trailing" secondItem="qLt-Ah-uz0" secondAttribute="trailing" constant="20" id="O6X-Ea-xWT"/>
                             <constraint firstAttribute="bottom" secondItem="YTN-c8-aP3" secondAttribute="bottom" priority="999" id="RsR-0g-9hL"/>
-                            <constraint firstItem="YTN-c8-aP3" firstAttribute="top" secondItem="Sgg-SN-GNl" secondAttribute="bottom" id="WVf-og-XQQ"/>
-                            <constraint firstItem="Sgg-SN-GNl" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="Wgl-cn-qA7"/>
                             <constraint firstItem="1gI-v9-h8y" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="YLm-rj-nzk"/>
-                            <constraint firstAttribute="trailing" secondItem="Sgg-SN-GNl" secondAttribute="trailing" id="ek0-VU-b7o"/>
+                            <constraint firstItem="YTN-c8-aP3" firstAttribute="top" secondItem="4lA-Yg-ahJ" secondAttribute="bottom" id="bEn-Ja-TNC"/>
+                            <constraint firstItem="4lA-Yg-ahJ" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="cQ6-Je-CFD"/>
                             <constraint firstItem="1gI-v9-h8y" firstAttribute="top" secondItem="YTN-c8-aP3" secondAttribute="bottom" id="ixp-58-0PX"/>
+                            <constraint firstItem="4lA-Yg-ahJ" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="lCe-tW-dhw"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="qLt-Ah-uz0" secondAttribute="bottom" constant="20" id="las-zr-GFy"/>
                             <constraint firstItem="XCW-T9-ccL" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="m2e-qp-xQK"/>
-                            <constraint firstItem="Sgg-SN-GNl" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="oh0-hl-yKS"/>
                             <constraint firstAttribute="trailing" secondItem="YTN-c8-aP3" secondAttribute="trailing" id="pcG-LK-NxI"/>
                             <constraint firstItem="qLt-Ah-uz0" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="gdV-44-I4D" secondAttribute="trailing" constant="8" symbolic="YES" id="tKS-qN-t8G"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="1gI-v9-h8y" secondAttribute="bottom" id="vUI-eb-Zf2"/>
                             <constraint firstItem="YTN-c8-aP3" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="wKK-cD-rWw"/>
+                            <constraint firstAttribute="trailing" secondItem="4lA-Yg-ahJ" secondAttribute="trailing" id="yTu-j2-gKz"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="1gI-v9-h8y" secondAttribute="trailing" id="yWJ-a3-ez2"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
@@ -136,6 +147,7 @@
                         <outlet property="rightButton" destination="qLt-Ah-uz0" id="Ppm-Od-kvf"/>
                         <outlet property="sceneView" destination="YTN-c8-aP3" id="FPx-qV-3KY"/>
                         <outlet property="sceneViewBottomToCollectionViewConstraint" destination="ixp-58-0PX" id="W4g-tO-Phc"/>
+                        <outlet property="sectionPickerView" destination="LqP-bk-ECo" id="GXx-mv-lIN"/>
                         <outlet property="topLabel" destination="Sgg-SN-GNl" id="uM0-sl-Vgx"/>
                     </connections>
                 </viewController>
