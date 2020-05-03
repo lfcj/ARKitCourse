@@ -72,6 +72,7 @@ class ViewController: UIViewController {
     private var vehicle = SCNPhysicsVehicle()
     private var orientation: CGFloat = 0
     private var userDidTouchScreen = false
+    private var userTouches: Int = 0
     private var accelerationValues = [UIAccelerationValue(0), UIAccelerationValue(0)]
 
     // MARK: - View Lifecycle
@@ -95,10 +96,16 @@ class ViewController: UIViewController {
     // MARK: - Overridden Methods
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard !touches.isEmpty else {
+            return
+        }
+        // If user touched with 2 fingers, the count will be 2
+        userTouches = touches.count
         userDidTouchScreen = true
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        userTouches = 0
         userDidTouchScreen = false
     }
 
@@ -879,17 +886,27 @@ private extension ViewController {
             return
         }
         var engineForce: CGFloat = 0
+        var breakingForce: CGFloat = 0
         // The orientation is negative because the car is rotated 180 degrees horizontally so it does not face us.
         vehicle.setSteeringAngle(-orientation, forWheelAt: 2)
         vehicle.setSteeringAngle(-orientation, forWheelAt: 3)
-        if userDidTouchScreen == true {
+        if userTouches == 1 {
             engineForce = 5
+        } else if userTouches == 2 {
+            engineForce = -5
+        } else if userTouches == 3 {
+            breakingForce = 100
         } else {
             engineForce = 0
         }
+
         // Notice how force is applied from the back.
-        self.vehicle.applyEngineForce(engineForce, forWheelAt: 0)
-        self.vehicle.applyEngineForce(engineForce, forWheelAt: 1)
+        vehicle.applyEngineForce(engineForce, forWheelAt: 0)
+        vehicle.applyEngineForce(engineForce, forWheelAt: 1)
+
+        // Breaking logic
+        vehicle.applyEngineForce(breakingForce, forWheelAt: 0)
+        vehicle.applyEngineForce(breakingForce, forWheelAt: 1)
     }
 
 }
@@ -946,6 +963,10 @@ private extension ViewController {
             makeRandomNumber(-1, 1),
             makeRandomNumber(-0.5, 0.5),
             makeRandomNumber(-1, 1))
+    }
+
+    func calculateDistance(x: Float, y: Float, z: Float) -> Float {
+        return (sqrtf(x*x + y*y + z*z))
     }
 
 }
