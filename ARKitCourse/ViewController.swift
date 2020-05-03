@@ -248,10 +248,12 @@ extension ViewController: ARSCNViewDelegate {
 
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         switch currentSection {
-        case .section7, .section9:
-            handleLavaPlaneDidAdd(node: node, for: anchor)
+        case .section7:
+            handlePlaneDidAdd(node: node, for: anchor, childNode: makeLavaNode(for: anchor))
         case .section8:
             handleIKEAPlaneDidAdd(node: node, for: anchor)
+        case .section9:
+            handlePlaneDidAdd(node: node, for: anchor, childNode: makeConcreteNode(for: anchor))
         default:
             break
         }
@@ -259,22 +261,20 @@ extension ViewController: ARSCNViewDelegate {
 
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
         switch currentSection {
-        case .section7, .section9:
-            handleLavaPlaneDidUpdate(node: node, for: anchor)
+        case .section7:
+            handlePlaneDidUpdate(node: node, for: anchor, childNode: makeLavaNode(for: anchor))
+        case .section9:
+            handlePlaneDidUpdate(node: node, for: anchor, childNode: makeConcreteNode(for: anchor))
         default:
             break
         }
-        guard .section7 == currentSection else {
-            return
-        }
-        
     }
 
     /// It is called when the device makes a mistake and adds something it should have not
     func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
         switch currentSection {
         case .section7, .section9:
-            handleLavaPlaneDidRemove(node: node, for: anchor)
+            handlePlaneDidRemove(node: node, for: anchor)
         default:
             break
         }
@@ -575,25 +575,18 @@ private extension ViewController {
 
 private extension ViewController {
 
-    func handleLavaPlaneDidAdd(node: SCNNode, for anchor: ARAnchor) {
-        guard let planeAnchor = anchor as? ARPlaneAnchor else {
+    func handlePlaneDidAdd(node: SCNNode, for anchor: ARAnchor, childNode: SCNNode?) {
+        guard anchor is ARPlaneAnchor else {
             return
         }
         print ("New plane service detected, new ARPlaneAnchor added")
-        let childNode: SCNNode?
-        switch currentSection {
-        case .section7:
-            childNode = makeLavaNode(for: planeAnchor)
-        case .section9:
-            childNode = makeConcreteNode(for: planeAnchor)
-        default:
-            childNode = nil
+        if let childNode = childNode {
+            node.addChildNode(childNode)
         }
-        node.addChildNode(childNode!)
     }
 
-    func handleLavaPlaneDidUpdate(node: SCNNode, for anchor: ARAnchor) {
-        guard let planeAnchor = anchor as? ARPlaneAnchor else {
+    func handlePlaneDidUpdate(node: SCNNode, for anchor: ARAnchor, childNode: SCNNode?) {
+        guard anchor is ARPlaneAnchor else {
             return
         }
         print ("Updating floor's anchor")
@@ -601,29 +594,25 @@ private extension ViewController {
             // Have to remove it cuz we want to update the anchor size and it is a let constant
             childNode.removeFromParentNode()
         }
-        let childNode: SCNNode?
-        switch currentSection {
-        case .section7:
-            childNode = makeLavaNode(for: planeAnchor)
-        case .section9:
-            childNode = makeConcreteNode(for: planeAnchor)
-        default:
-            childNode = nil
+        if let childNode = childNode {
+            node.addChildNode(childNode)
         }
-        node.addChildNode(childNode!)
     }
 
-    func handleLavaPlaneDidRemove(node: SCNNode, for anchor: ARAnchor) {
+    func handlePlaneDidRemove(node: SCNNode, for anchor: ARAnchor) {
         guard anchor is ARPlaneAnchor else {
             return
         }
         node.enumerateChildNodes { (childNode, _) in
-            // Remove lava node
+            // Remove plane node
             childNode.removeFromParentNode()
         }
     }
 
-    func makeLavaNode(for planeAnchor: ARPlaneAnchor) -> SCNNode {
+    func makeLavaNode(for anchor: ARAnchor) -> SCNNode? {
+        guard let planeAnchor = anchor as? ARPlaneAnchor else {
+            return nil
+        }
         let lavaNode = SCNNode(geometry: SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z)))
         setDiffuse(#imageLiteral(resourceName: "lava"), to: lavaNode)
         lavaNode.position = planeAnchor.position
@@ -780,7 +769,10 @@ private extension ViewController {
         sceneView.scene.rootNode.addChildNode(box)
     }
 
-    func makeConcreteNode(for planeAnchor: ARPlaneAnchor) -> SCNNode {
+    func makeConcreteNode(for anchor: ARAnchor) -> SCNNode? {
+        guard let planeAnchor = anchor as? ARPlaneAnchor else {
+            return nil
+        }
         let concreteNode = SCNNode(geometry: SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z)))
         setDiffuse(#imageLiteral(resourceName: "concrete"), to: concreteNode)
         // Give concrete a physics body
@@ -792,7 +784,6 @@ private extension ViewController {
         concreteNode.eulerAngles = SCNVector3(90.degreesToRadians, 0, 0)
         return concreteNode
     }
-
 
 }
 
