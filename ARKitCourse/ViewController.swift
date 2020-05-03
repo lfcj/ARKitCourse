@@ -1,5 +1,6 @@
-import UIKit
 import ARKit
+import CoreMotion
+import UIKit
 
 class ViewController: UIViewController {
 
@@ -55,6 +56,7 @@ class ViewController: UIViewController {
     // MARK: - Properties
 
     private let configuration = ARWorldTrackingConfiguration()
+    private let motionManager = CMMotionManager()
     private var currentSection = Section.section9 {
         didSet {
             configureCurrentSection()
@@ -67,6 +69,12 @@ class ViewController: UIViewController {
     private var timer: Timer?
     private let ikeaItems: [String] = ["cup", "vase", "boxing", "table"]
     private var selectedIkeaItem: String?
+    private var vehicle = SCNPhysicsVehicle()
+    private var orientation: CGFloat = 0
+    private var userDidTouchScreen = false
+    private var accelerationValues = [UIAccelerationValue(0), UIAccelerationValue(0)]
+
+    // MARK: - View Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -82,6 +90,16 @@ class ViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         makeSolarSystem()
+    }
+
+    // MARK: - Overridden Methods
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        userDidTouchScreen = true
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        userDidTouchScreen = false
     }
 
     // MARK: - Actions
@@ -227,6 +245,7 @@ private extension ViewController {
         guard !isHidden else {
             return
         }
+        setUpAccelerometer()
         leftButton.setImage(nil, for: .normal)
         rightButton.setImage(nil, for: .normal)
         configuration.planeDetection = .horizontal
@@ -278,6 +297,10 @@ extension ViewController: ARSCNViewDelegate {
         default:
             break
         }
+    }
+
+    func renderer(_ renderer: SCNSceneRenderer, didSimulatePhysicsAtTime time: TimeInterval) {
+        handleDidSimulatePhysics()
     }
 
 }
@@ -758,24 +781,38 @@ private extension ViewController {
 
         guard
             let scene = SCNScene(named: "car-scene.scn"),
-            let carFrameNode = scene.rootNode.childNode(withName: "frame", recursively: false)
+            let carChassisNode = scene.rootNode.childNode(withName: "chassis", recursively: false),
+            let rearRightWheel = carChassisNode.childNode(withName: "rearRightParent", recursively: false),
+            let rearLeftWheel = carChassisNode.childNode(withName: "rearLeftParent", recursively: false),
+            let frontRightWheel = carChassisNode.childNode(withName: "frontRightParent", recursively: false),
+            let frontLeftWheel = carChassisNode.childNode(withName: "frontLeftParent", recursively: false)
         else {
-            return
+            fatalError("something was nil")
         }
 
         // make car fall
         let body = SCNPhysicsBody(
             type: .dynamic, // we want it to be affected by forces
             shape: SCNPhysicsShape(
-                node: carFrameNode,
+                node: carChassisNode,
                 options: [SCNPhysicsShape.Option.keepAsCompound: true])) // true for when we have more shapes
-        carFrameNode.physicsBody = body
-        carFrameNode.position = positionInFrontOfCamera
+        // Make car slower
+        body.mass = 1 // Newtons, it is heavier
+        carChassisNode.physicsBody = body
+        carChassisNode.position = positionInFrontOfCamera
+        vehicle = SCNPhysicsVehicle(
+            chassisBody: body,
+            wheels: [
+                SCNPhysicsVehicleWheel(node: rearRightWheel),
+                SCNPhysicsVehicleWheel(node: rearLeftWheel),
+                SCNPhysicsVehicleWheel(node: frontRightWheel),
+                SCNPhysicsVehicleWheel(node: frontLeftWheel)])
 
-        carFrameNode.name = "vehicle"
+        carChassisNode.name = "vehicle"
         rootNodeChildrenNames.append("vehicle")
 
-        sceneView.scene.rootNode.addChildNode(carFrameNode)
+        sceneView.scene.physicsWorld.addBehavior(vehicle)
+        sceneView.scene.rootNode.addChildNode(carChassisNode)
     }
 
     func makeConcreteNode(for anchor: ARAnchor) -> SCNNode? {
@@ -792,6 +829,67 @@ private extension ViewController {
         concreteNode.geometry?.firstMaterial?.isDoubleSided = true
         concreteNode.eulerAngles = SCNVector3(90.degreesToRadians, 0, 0)
         return concreteNode
+    }
+
+    func setUpAccelerometer() {
+        guard motionManager.isAccelerometerAvailable else {
+            print ("Accelerometer not available")
+            return
+        }
+        motionManager.accelerometerUpdateInterval = 1/60 // 60 times a second
+        motionManager.startAccelerometerUpdates(to: .main, withHandler: { [weak self] (accelerometerData, error) in
+            guard let self = self else {
+                return
+            }
+            guard error == nil else {
+                print (error!.localizedDescription)
+                return
+            }
+            guard let accelerometerData = accelerometerData else {
+                return
+            }
+            self.accelerometerDidChange(acceleration: accelerometerData.acceleration)
+        })
+    }
+
+    func accelerometerDidChange(acceleration: CMAcceleration) {
+        // The phone has an "inner" Cartesian coordinate system
+        // Moving it to the right makes the x gravity possitive, moving it to the left, negative.
+
+        // Make a smoother steering angle by eliminating non gravitational accelerations (movements, for example)
+        accelerationValues[1] = filterNonGravitationalAcceleration(from: accelerationValues[1], updatedAcceleration: acceleration.y)
+        accelerationValues[0] = filterNonGravitationalAcceleration(from: accelerationValues[0], updatedAcceleration: acceleration.x)
+
+        // Whatever is the y value represents the current orientation of the phone.
+        if accelerationValues[0] > 0 { // This is > 0 when phone is oriented to he right
+            self.orientation = -CGFloat(accelerationValues[1])
+        } else { // This is > 0 when phone is oriented to he left
+            self.orientation = CGFloat(accelerationValues[1])
+        }
+    }
+
+    func filterNonGravitationalAcceleration(from currentAcceleration: Double, updatedAcceleration: Double) -> Double {
+        let filteringFactor = 0.5
+        return updatedAcceleration * filteringFactor + currentAcceleration * (1 - filteringFactor)
+        
+    }
+
+    func handleDidSimulatePhysics() {
+        guard .section9 == currentSection else {
+            return
+        }
+        var engineForce: CGFloat = 0
+        // The orientation is negative because the car is rotated 180 degrees horizontally so it does not face us.
+        vehicle.setSteeringAngle(-orientation, forWheelAt: 2)
+        vehicle.setSteeringAngle(-orientation, forWheelAt: 3)
+        if userDidTouchScreen == true {
+            engineForce = 5
+        } else {
+            engineForce = 0
+        }
+        // Notice how force is applied from the back.
+        self.vehicle.applyEngineForce(engineForce, forWheelAt: 0)
+        self.vehicle.applyEngineForce(engineForce, forWheelAt: 1)
     }
 
 }
