@@ -73,7 +73,7 @@ class ViewController: UIViewController {
     private var orientation: CGFloat = 0
     private var userDidTouchScreen = false
     private var userTouches: Int = 0
-    private var accelerationValues = [UIAccelerationValue(0), UIAccelerationValue(0)]
+    private var accelerationValues: [Double] = [0, 0]
 
     // MARK: - View Lifecycle
 
@@ -83,6 +83,7 @@ class ViewController: UIViewController {
         sectionPickerView.dataSource = self
         sectionPickerView.delegate = self
         configureCurrentSection()
+        setUpAccelerometer()
         if let sectionIndex = Section.allCases.firstIndex(of: currentSection) {
             sectionPickerView.selectRow(sectionIndex, inComponent: 0, animated: true)
         }
@@ -100,7 +101,7 @@ class ViewController: UIViewController {
             return
         }
         // If user touched with 2 fingers, the count will be 2
-        userTouches = touches.count
+        userTouches += touches.count
         userDidTouchScreen = true
     }
 
@@ -252,7 +253,6 @@ private extension ViewController {
         guard !isHidden else {
             return
         }
-        setUpAccelerometer()
         leftButton.setImage(nil, for: .normal)
         rightButton.setImage(nil, for: .normal)
         configuration.planeDetection = .horizontal
@@ -797,6 +797,7 @@ private extension ViewController {
             fatalError("something was nil")
         }
 
+        carChassisNode.position = positionInFrontOfCamera
         // make car fall
         let body = SCNPhysicsBody(
             type: .dynamic, // we want it to be affected by forces
@@ -806,9 +807,8 @@ private extension ViewController {
         // Make car slower
         body.mass = 1 // Newtons, it is heavier
         carChassisNode.physicsBody = body
-        carChassisNode.position = positionInFrontOfCamera
         vehicle = SCNPhysicsVehicle(
-            chassisBody: body,
+            chassisBody: carChassisNode.physicsBody!,
             wheels: [
                 SCNPhysicsVehicleWheel(node: rearRightWheel),
                 SCNPhysicsVehicleWheel(node: rearLeftWheel),
@@ -828,17 +828,20 @@ private extension ViewController {
         }
         let concreteNode = SCNNode(geometry: SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z)))
         setDiffuse(#imageLiteral(resourceName: "concrete"), to: concreteNode)
+        // Make sure one can see the lava from both sides
+        concreteNode.geometry?.firstMaterial?.isDoubleSided = true
+        concreteNode.position = SCNVector3(planeAnchor.center.x,planeAnchor.center.y,planeAnchor.center.z)
+        concreteNode.eulerAngles = SCNVector3(90.degreesToRadians, 0, 0)
         // Give concrete a physics body
         let staticBody = SCNPhysicsBody.static() // static is anything that's gonna be fixed in one place. It needs to support other bodies. Gravity won't affect it
         concreteNode.physicsBody = staticBody
-        concreteNode.position = planeAnchor.position
-        // Make sure one can see the lava from both sides
-        concreteNode.geometry?.firstMaterial?.isDoubleSided = true
-        concreteNode.eulerAngles = SCNVector3(90.degreesToRadians, 0, 0)
         return concreteNode
     }
 
     func setUpAccelerometer() {
+        guard .section9 == currentSection else {
+            return
+        }
         guard motionManager.isAccelerometerAvailable else {
             print ("Accelerometer not available")
             return
@@ -873,6 +876,12 @@ private extension ViewController {
         } else { // This is > 0 when phone is oriented to he left
             self.orientation = CGFloat(accelerationValues[1])
         }
+        // Without using filtered values
+//        if acceleration.x > 0 {
+//            self.orientation = -CGFloat(acceleration.y)
+//        } else {
+//            self.orientation = CGFloat(acceleration.y)
+//        }
     }
 
     func filterNonGravitationalAcceleration(from currentAcceleration: Double, updatedAcceleration: Double) -> Double {
@@ -905,8 +914,8 @@ private extension ViewController {
         vehicle.applyEngineForce(engineForce, forWheelAt: 1)
 
         // Breaking logic
-        vehicle.applyEngineForce(breakingForce, forWheelAt: 0)
-        vehicle.applyEngineForce(breakingForce, forWheelAt: 1)
+        vehicle.applyBrakingForce(breakingForce, forWheelAt: 0)
+        vehicle.applyBrakingForce(breakingForce, forWheelAt: 1)
     }
 
 }
@@ -1000,4 +1009,5 @@ extension ARPlaneAnchor {
             center.y,
             center.z)
     }
+
 }
