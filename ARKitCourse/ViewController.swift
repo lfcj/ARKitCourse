@@ -75,6 +75,7 @@ class ViewController: UIViewController {
     private var currentSection = Section.section11 {
         didSet {
             configureCurrentSection()
+            removeAllTapRecognizers()
             restartSession()
             makeSolarSystem()
         }
@@ -288,6 +289,8 @@ private extension ViewController {
         }
         leftButton.setImage(nil, for: .normal)
         rightButton.setImage(nil, for: .normal)
+        leftButton.setTitle("Add", for: .normal)
+        rightButton.setTitle("Reset", for: .normal)
         configuration.planeDetection = .horizontal
         sceneView.delegate = self
     }
@@ -435,6 +438,12 @@ private extension ViewController {
         }
         sceneView.session.pause()
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+    }
+
+    func removeAllTapRecognizers() {
+        for recognizer in sceneView.gestureRecognizers ?? [] {
+            sceneView.removeGestureRecognizer(recognizer)
+        }
     }
 
 }
@@ -1081,7 +1090,7 @@ private extension ViewController {
             let portalScene = SCNScene(named: "art.scnassets/portal.scn"),
             let portalNode = portalScene.rootNode.childNode(withName: "portal", recursively: false)
         else {
-            return
+            fatalError("Either portalScene or portalNode do not exist")
         }
 
         // This encodes position of plane
@@ -1093,6 +1102,23 @@ private extension ViewController {
         portalNode.name = "portal"
         rootNodeChildrenNames.append("portal")
         sceneView.scene.rootNode.addChildNode(portalNode)
+        addPortalPlane(nodeName: "roof", portalNode: portalNode, imageName: "top")
+        addPortalPlane(nodeName: "floor", portalNode: portalNode, imageName: "bottom")
+        addPortalPlane(nodeName: "backWall", portalNode: portalNode, imageName: "back")
+        addPortalPlane(nodeName: "sideDoorB", portalNode: portalNode, imageName: "sideDoorB")
+        addPortalPlane(nodeName: "sideDoorA", portalNode: portalNode, imageName: "sideDoorA")
+        addPortalPlane(nodeName: "sideWallB", portalNode: portalNode, imageName: "sideB")
+        addPortalPlane(nodeName: "sideWallA", portalNode: portalNode, imageName: "sideA")
+    }
+
+    func addPortalPlane(nodeName: String, portalNode: SCNNode, imageName: String) {
+        guard let childNode = portalNode.childNode(withName: nodeName, recursively: true) else {
+            fatalError("Node \(nodeName) does not exist")
+        }
+        guard let assetImage = UIImage(named: "11_Portal/\(imageName)") else {
+            fatalError("Image 11_Portal/\(imageName) does not exist")
+        }
+        setDiffuse(assetImage, to: childNode)
     }
 
 }

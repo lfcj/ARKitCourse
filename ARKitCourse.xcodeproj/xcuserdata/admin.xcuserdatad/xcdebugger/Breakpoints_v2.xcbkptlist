@@ -7,47 +7,15 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "375C1412-BF61-47BF-AE69-121969A84CF1"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "ARKitCourse/ViewController.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "817"
-            endingLineNumber = "817"
-            landmarkName = "handlePlaneDidAdd(node:for:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "BBCF77B9-62D8-430F-96EC-9D08F3E7EAED"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "ARKitCourse/ViewController.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "813"
-            endingLineNumber = "813"
-            landmarkName = "handlePlaneDidAdd(node:for:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "4E863F94-306C-43CD-A808-F6F07450990C"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "ARKitCourse/ViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "332"
-            endingLineNumber = "332"
+            startingLineNumber = "335"
+            endingLineNumber = "335"
             landmarkName = "renderer(_:didAdd:for:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -55,17 +23,49 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "53D0A388-9466-49BB-A815-5F4E14818DE2"
-            shouldBeEnabled = "Yes"
+            uuid = "1621BF9C-373C-40C5-A754-4CB5521DD1EC"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "ARKitCourse/ViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "307"
-            endingLineNumber = "307"
-            landmarkName = "configureSection11(isHidden:)"
+            startingLineNumber = "286"
+            endingLineNumber = "286"
+            landmarkName = "configureSection9(isHidden:)"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "1621BF9C-373C-40C5-A754-4CB5521DD1EC - 7642136ba3b0fb0f"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ARKitCourse.ViewController.(configureSection9 in _290F56838CC94BB6AD69DF8F252299A9)(isHidden: Swift.Bool) -&gt; ()"
+                  moduleName = "ARKitCourse"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/admin/Repos/ARKitCourse/ARKitCourse/ViewController.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "285"
+                  endingLineNumber = "285"
+                  offsetFromSymbolStart = "56">
+               </Location>
+               <Location
+                  uuid = "1621BF9C-373C-40C5-A754-4CB5521DD1EC - c502919064837a3d"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (Swift.Optional&lt;__C.UIButton&gt;) -&gt; () in ARKitCourse.ViewController.(configureSection9 in _290F56838CC94BB6AD69DF8F252299A9)(isHidden: Swift.Bool) -&gt; ()"
+                  moduleName = "ARKitCourse"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/admin/Repos/ARKitCourse/ARKitCourse/ViewController.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "285"
+                  endingLineNumber = "285"
+                  offsetFromSymbolStart = "96">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
