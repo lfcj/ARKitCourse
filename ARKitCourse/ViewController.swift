@@ -21,6 +21,10 @@ class ViewController: UIViewController {
         case section8
         // Vehicle
         case section9
+        // Measure Distances
+        case section10
+        // AR Portal
+        case section11
 
         var name: String {
             switch self {
@@ -38,6 +42,10 @@ class ViewController: UIViewController {
                 return "Ikea"
             case .section9:
                 return "Vehicle"
+            case .section10:
+                return "Measuring"
+            case .section11:
+                return "AR Portal"
             }
         }
     }
@@ -52,28 +60,47 @@ class ViewController: UIViewController {
     @IBOutlet private var topLabel: UILabel!
     @IBOutlet private var collectionView: UICollectionView!
     @IBOutlet private var sceneViewBottomToCollectionViewConstraint: NSLayoutConstraint!
-
+    @IBOutlet private var measurementsStackView: UIStackView!
+    @IBOutlet private var diagonalDistanceLabel: UILabel!
+    @IBOutlet private var xDistanceLabel: UILabel!
+    @IBOutlet private var yDistanceLabel: UILabel!
+    @IBOutlet private var zDistanceLabel: UILabel!
+    @IBOutlet private var plusButton: UIButton!
+    
     // MARK: - Properties
 
     private let configuration = ARWorldTrackingConfiguration()
     private let motionManager = CMMotionManager()
-    private var currentSection = Section.section9 {
+    private var rootNodeChildrenNames = [String]()
+    private var currentSection = Section.section11 {
         didSet {
             configureCurrentSection()
             restartSession()
             makeSolarSystem()
         }
     }
+
+    // MARK: - Jellyfish Properties
+
     private var countdown = 10
-    private var rootNodeChildrenNames = [String]()
     private var timer: Timer?
+
+    // MARK: - IKEA Properties
+
     private let ikeaItems: [String] = ["cup", "vase", "boxing", "table"]
     private var selectedIkeaItem: String?
+
+    // MARK: - Vehicle Properties
+
     private var vehicle = SCNPhysicsVehicle()
     private var orientation: CGFloat = 0
     private var userDidTouchScreen = false
     private var userTouches: Int = 0
     private var accelerationValues: [Double] = [0, 0]
+
+    // MARK: - Measurement Properties
+
+    var startingPosition: SCNNode?
 
     // MARK: - View Lifecycle
 
@@ -159,6 +186,8 @@ private extension ViewController {
         configureSection7(isHidden: true)
         configureSection8(isHidden: true)
         configureSection9(isHidden: true)
+        configureSection10(isHidden: true)
+        configureSection11(isHidden: true)
 
         switch currentSection {
         case .section3:
@@ -175,6 +204,10 @@ private extension ViewController {
             configureSection8(isHidden: false)
         case .section9:
             configureSection9(isHidden: false)
+        case .section10:
+            configureSection10(isHidden: false)
+        case .section11:
+            configureSection11(isHidden: false)
         }
         sceneView.session.run(configuration)
     }
@@ -259,6 +292,29 @@ private extension ViewController {
         sceneView.delegate = self
     }
 
+    func configureSection10(isHidden: Bool) {
+        measurementsStackView.isHidden = isHidden
+        plusButton.isHidden = isHidden
+        guard !isHidden else {
+            return
+        }
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleMeasurementTap(_:)))
+        sceneView.addGestureRecognizer(tapGestureRecognizer)
+        middleButton.setTitle("Add", for: .normal)
+    }
+
+    func configureSection11(isHidden: Bool) {
+        guard !isHidden else {
+            return
+        }
+        sceneView.delegate = self
+        configuration.planeDetection = .horizontal
+        topLabel.font = .boldSystemFont(ofSize: 25)
+        topLabel.text = "Plane Detected"
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handlePortalTap))
+        sceneView.addGestureRecognizer(tapGestureRecognizer)
+    }
+
 }
 
 // MARK: - ARSCNViewDelegate
@@ -277,9 +333,11 @@ extension ViewController: ARSCNViewDelegate {
         case .section7:
             handlePlaneDidAdd(node: node, for: anchor, childNode: makeLavaNode(for: anchor))
         case .section8:
-            handleIKEAPlaneDidAdd(node: node, for: anchor)
+            handlePlaneDidAdd(node: node, for: anchor)
         case .section9:
             handlePlaneDidAdd(node: node, for: anchor, childNode: makeConcreteNode(for: anchor))
+        case .section11:
+            handlePlaneDidAdd(node: node, for: anchor)
         default:
             break
         }
@@ -304,6 +362,10 @@ extension ViewController: ARSCNViewDelegate {
         default:
             break
         }
+    }
+
+    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+        handleUpdateAtTime()
     }
 
     func renderer(_ renderer: SCNSceneRenderer, didSimulatePhysicsAtTime time: TimeInterval) {
@@ -554,6 +616,7 @@ private extension ViewController {
             self.animateNode(node: node)
             SCNTransaction.completionBlock = { [weak self] in
                 node.removeFromParentNode()
+                self?.removeJellyfishes()
                 self?.addJellyfish()
                 self?.restoreTimer()
             }
@@ -597,6 +660,14 @@ private extension ViewController {
 
     func resetJellyfishLabel() {
         topLabel.text = "Start playing"
+    }
+
+    func removeJellyfishes() {
+        self.sceneView.scene.rootNode.enumerateChildNodes { (node, _) in
+            if let nodeName = node.name, nodeName == "Jellyfish" {
+                node.removeFromParentNode()
+            }
+        }
     }
 
 }
@@ -738,7 +809,7 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate {
         sceneView.scene.rootNode.addChildNode(node)
     }
 
-    func handleIKEAPlaneDidAdd(node: SCNNode, for anchor: ARAnchor) {
+    func handlePlaneDidAdd(node: SCNNode, for anchor: ARAnchor) {
         guard anchor is ARPlaneAnchor else {
             return
         }
@@ -920,6 +991,112 @@ private extension ViewController {
 
 }
 
+// MARK: - Section 10 - Measurement
+
+private extension ViewController {
+
+    @objc func handleMeasurementTap(_ sender: UITapGestureRecognizer) {
+        guard let sceneView = sender.view as? ARSCNView else {
+            return
+        }
+        guard let currentFrame = sceneView.session.currentFrame else {
+            return
+        }
+        guard startingPosition == nil else {
+            startingPosition?.removeFromParentNode()
+            startingPosition = nil
+            return
+        }
+        let camera = currentFrame.camera
+        // This encondes position of camera. The third column is what we care about
+        let cameraTransform = camera.transform
+        
+        let sphereNode = SCNNode(geometry: SCNSphere(radius: 0.005))
+        setDiffuse(.systemPink, to: sphereNode)
+
+        var translationMatrix = matrix_identity_float4x4
+        translationMatrix.columns.3.z = -0.1
+        let modifiedMatrix = simd_mul(cameraTransform, translationMatrix)
+
+        sphereNode.name = "distance"
+        rootNodeChildrenNames.append("distance")
+        // Let's put the phone 0.1 meters away from where I am
+        sphereNode.simdTransform = modifiedMatrix
+        sceneView.scene.rootNode.addChildNode(sphereNode)
+        startingPosition = sphereNode
+    }
+
+    func handleUpdateAtTime() {
+        guard .section10 == currentSection else {
+            return
+        }
+        guard let startingPosition = self.startingPosition else {
+            return
+        }
+        // current position of camera's point of view
+        // has current orientation and location of camera view
+        guard let pointOfView = sceneView.pointOfView else {
+            return
+        }
+        let transform = pointOfView.transform
+        let location = SCNVector3(transform.m41, transform.m42, transform.m43)
+        let xDistanceValue = location.x - startingPosition.position.x
+        let yDistanceValue = location.y - startingPosition.position.y
+        let zDistanceValue = location.z - startingPosition.position.z
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else {
+                return
+            }
+            self.xDistanceLabel.text = String(format: "%.2f", xDistanceValue) + "m"
+            self.yDistanceLabel.text = String(format: "%.2f", yDistanceValue) + "m"
+            self.zDistanceLabel.text = String(format: "%.2f", zDistanceValue) + "m"
+            let diagonalDistanceValue = self.calculateDistance(x: xDistanceValue, y: yDistanceValue, z: zDistanceValue)
+            self.diagonalDistanceLabel.text = String(format: "%.2f", diagonalDistanceValue) + "m"
+        }
+    }
+
+}
+
+// MARK: - Section 11 - AR Portal
+
+private extension ViewController {
+
+    @objc func handlePortalTap(_ sender: UITapGestureRecognizer) {
+        guard let sceneView = sender.view as? ARSCNView else {
+            return
+        }
+        let touchLocation = sender.location(in: sceneView)
+        let hitTestResult = sceneView.hitTest(touchLocation, types: .existingPlaneUsingExtent)
+        if let firstHitTestResult = hitTestResult.first {
+            // we're going to add our room
+            addPortal(hitTestResult: firstHitTestResult)
+        } else {
+            
+        }
+    }
+
+    func addPortal(hitTestResult: ARHitTestResult) {
+        guard
+            let portalScene = SCNScene(named: "art.scnassets/portal.scn"),
+            let portalNode = portalScene.rootNode.childNode(withName: "portal", recursively: false)
+        else {
+            return
+        }
+
+        // This encodes position of plane
+        let transform = hitTestResult.worldTransform
+        let planeXPosition = transform.columns.3.x
+        let planeYPosition = transform.columns.3.y
+        let planeZPosition = transform.columns.3.z - 1
+        portalNode.position = SCNVector3(planeXPosition, planeYPosition, planeZPosition)
+        portalNode.name = "portal"
+        rootNodeChildrenNames.append("portal")
+        sceneView.scene.rootNode.addChildNode(portalNode)
+    }
+
+}
+
 // MARK: - Helpers
 
 private extension ViewController {
@@ -964,7 +1141,7 @@ private extension ViewController {
     }
 
     func makeRandomNumber(_ first: CGFloat, _ second: CGFloat) -> CGFloat {
-        return CGFloat(arc4random()) / CGFloat(UINT32_MAX) * abs(first - second) + min(first, second)
+        CGFloat(arc4random()) / CGFloat(UINT32_MAX) * abs(first - second) + min(first, second)
     }
 
     func makeRandomVector() -> SCNVector3 {
@@ -975,7 +1152,7 @@ private extension ViewController {
     }
 
     func calculateDistance(x: Float, y: Float, z: Float) -> Float {
-        return (sqrtf(x*x + y*y + z*z))
+        sqrtf(x * x + y * y + z * z)
     }
 
 }
