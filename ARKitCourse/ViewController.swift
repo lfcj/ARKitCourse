@@ -1104,11 +1104,29 @@ private extension ViewController {
         sceneView.scene.rootNode.addChildNode(portalNode)
         addPortalPlane(nodeName: "roof", portalNode: portalNode, imageName: "top")
         addPortalPlane(nodeName: "floor", portalNode: portalNode, imageName: "bottom")
-        addPortalPlane(nodeName: "backWall", portalNode: portalNode, imageName: "back")
-        addPortalPlane(nodeName: "sideDoorB", portalNode: portalNode, imageName: "sideDoorB")
-        addPortalPlane(nodeName: "sideDoorA", portalNode: portalNode, imageName: "sideDoorA")
-        addPortalPlane(nodeName: "sideWallB", portalNode: portalNode, imageName: "sideB")
-        addPortalPlane(nodeName: "sideWallA", portalNode: portalNode, imageName: "sideA")
+        addWallPlane(nodeName: "backWall", portalNode: portalNode, imageName: "back")
+        addWallPlane(nodeName: "sideDoorB", portalNode: portalNode, imageName: "sideDoorB")
+        addWallPlane(nodeName: "sideDoorA", portalNode: portalNode, imageName: "sideDoorA")
+        addWallPlane(nodeName: "sideWallB", portalNode: portalNode, imageName: "sideB")
+        addWallPlane(nodeName: "sideWallA", portalNode: portalNode, imageName: "sideA")
+    }
+
+    func addWallPlane(nodeName: String, portalNode: SCNNode, imageName: String) {
+        guard let childNode = portalNode.childNode(withName: nodeName, recursively: true) else {
+            fatalError("Node \(nodeName) does not exist")
+        }
+        guard let assetImage = UIImage(named: "11_Portal/\(imageName)") else {
+            fatalError("Image 11_Portal/\(imageName) does not exist")
+        }
+        setDiffuse(assetImage, to: childNode)
+        // We render the wall after the mask, which is translucent.
+        // That way the colors are mixed. Since mask is very translucent, the walls will be almost invisible
+        childNode.renderingOrder = 200
+        guard let maskNode = childNode.childNode(withName: "mask", recursively: false) else {
+            fatalError("mask does not exist")
+        }
+        setTransparency(0.000001, to: maskNode)
+        
     }
 
     func addPortalPlane(nodeName: String, portalNode: SCNNode, imageName: String) {
@@ -1119,6 +1137,8 @@ private extension ViewController {
             fatalError("Image 11_Portal/\(imageName) does not exist")
         }
         setDiffuse(assetImage, to: childNode)
+        // by rendering later, we manage these to be sort of transparent
+        childNode.renderingOrder = 200
     }
 
 }
@@ -1137,6 +1157,10 @@ private extension ViewController {
 
     func setDiffuse(_ image: UIImage?, to node: SCNNode) {
         node.geometry?.firstMaterial?.diffuse.contents = image
+    }
+
+    func setTransparency(_ opacity: CGFloat, to node: SCNNode) {
+        node.geometry?.firstMaterial?.transparency = opacity
     }
 
     func setSpecular(_ image: UIImage?, to node: SCNNode) {
