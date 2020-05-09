@@ -245,8 +245,8 @@ private extension ViewController {
             button?.backgroundColor = nil
             button?.tintColor = nil
         }
-        leftButton.setImage(#imageLiteral(resourceName: "Play"), for: .normal)
-        rightButton.setImage(#imageLiteral(resourceName: "Reset"), for: .normal)
+        leftButton.setImage(#imageLiteral(resourceName: "6_jellyfish/Play"), for: .normal)
+        rightButton.setImage(#imageLiteral(resourceName: "6_jellyfish/Reset"), for: .normal)
         resetJellyfishLabel()
 
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleJellyfishTap))
@@ -511,10 +511,10 @@ private extension ViewController {
         let earthParent = SCNNode()
         let earth = makePlanet(
             geometry: SCNSphere(radius: 0.2),
-            diffuse: #imageLiteral(resourceName: "Earth day"),
-            specular: #imageLiteral(resourceName: "Earth Specular"),
-            emission: #imageLiteral(resourceName: "Earth Emission"),
-            normal: #imageLiteral(resourceName: "Earth Normal"),
+            diffuse: #imageLiteral(resourceName: "5_Solar system/Earth day"),
+            specular: #imageLiteral(resourceName: "5_Solar system/Earth Specular"),
+            emission: #imageLiteral(resourceName: "5_Solar system/Earth Emission"),
+            normal: #imageLiteral(resourceName: "5_Solar system/Earth Normal"),
             position: SCNVector3(1.2 ,0 , 0))
 
         earthParent.runAction(makeForeverRotation(duration: 14))
@@ -530,7 +530,7 @@ private extension ViewController {
         let moonParent = SCNNode()
         let moon = makePlanet(
             geometry: SCNSphere(radius: 0.05),
-            diffuse: #imageLiteral(resourceName: "moon Diffuse"),
+            diffuse: #imageLiteral(resourceName: "5_Solar system/moon Diffuse"),
             specular: nil,
             emission: nil,
             normal: nil,
@@ -542,7 +542,7 @@ private extension ViewController {
 
     func makeSun() -> SCNNode {
         let sun = SCNNode(geometry: SCNSphere(radius: 0.35))
-        setDiffuse(#imageLiteral(resourceName: "Sun diffuse"), to: sun)
+        setDiffuse(#imageLiteral(resourceName: "5_Solar system/Sun diffuse"), to: sun)
         sun.position = SCNVector3(0,0,-2)
         sun.runAction(makeForeverRotation(duration: 8))
         return sun
@@ -552,9 +552,9 @@ private extension ViewController {
         let venusParent = SCNNode()
         let venus = makePlanet(
             geometry: SCNSphere(radius: 0.1),
-            diffuse: #imageLiteral(resourceName: "Venus Surface"),
+            diffuse: #imageLiteral(resourceName: "5_Solar system/Venus Surface"),
             specular: nil,
-            emission: #imageLiteral(resourceName: "Venus Atmosphere"),
+            emission: #imageLiteral(resourceName: "5_Solar system/Venus Atmosphere"),
             normal: nil,
             position: SCNVector3(0.7, 0, 0))
         venusParent.runAction(makeForeverRotation(duration: 10))
@@ -715,7 +715,7 @@ private extension ViewController {
             return nil
         }
         let lavaNode = SCNNode(geometry: SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z)))
-        setDiffuse(#imageLiteral(resourceName: "lava"), to: lavaNode)
+        setDiffuse(#imageLiteral(resourceName: "7_Lava Floor/lava"), to: lavaNode)
         lavaNode.position = planeAnchor.position
         // Make sure one can see the lava from both sides
         lavaNode.geometry?.firstMaterial?.isDoubleSided = true
@@ -898,7 +898,7 @@ private extension ViewController {
             return nil
         }
         let concreteNode = SCNNode(geometry: SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z)))
-        setDiffuse(#imageLiteral(resourceName: "concrete"), to: concreteNode)
+        setDiffuse(#imageLiteral(resourceName: "9_Car/concrete"), to: concreteNode)
         // Make sure one can see the lava from both sides
         concreteNode.geometry?.firstMaterial?.isDoubleSided = true
         concreteNode.position = SCNVector3(planeAnchor.center.x,planeAnchor.center.y,planeAnchor.center.z)
