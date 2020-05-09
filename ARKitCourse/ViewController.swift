@@ -25,6 +25,8 @@ class ViewController: UIViewController {
         case section10
         // AR Portal
         case section11
+        // Basketball
+        case section12
 
         var name: String {
             switch self {
@@ -46,6 +48,8 @@ class ViewController: UIViewController {
                 return "Measuring"
             case .section11:
                 return "AR Portal"
+            case .section12:
+                return "Basketball Court"
             }
         }
     }
@@ -72,7 +76,7 @@ class ViewController: UIViewController {
     private let configuration = ARWorldTrackingConfiguration()
     private let motionManager = CMMotionManager()
     private var rootNodeChildrenNames = [String]()
-    private var currentSection = Section.section11 {
+    private var currentSection = Section.section12 {
         didSet {
             configureCurrentSection()
             removeAllTapRecognizers()
@@ -189,6 +193,7 @@ private extension ViewController {
         configureSection9(isHidden: true)
         configureSection10(isHidden: true)
         configureSection11(isHidden: true)
+        configureSection12(isHidden: true)
 
         switch currentSection {
         case .section3:
@@ -209,6 +214,8 @@ private extension ViewController {
             configureSection10(isHidden: false)
         case .section11:
             configureSection11(isHidden: false)
+        case .section12:
+            configureSection12(isHidden: true)
         }
         sceneView.session.run(configuration)
     }
@@ -316,6 +323,14 @@ private extension ViewController {
         topLabel.text = "Plane Detected"
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handlePortalTap))
         sceneView.addGestureRecognizer(tapGestureRecognizer)
+    }
+
+    func configureSection12(isHidden: Bool) {
+        plusButton.isHidden = isHidden
+        guard !isHidden else {
+            return
+        }
+        sceneView.automaticallyUpdatesLighting = true
     }
 
 }
