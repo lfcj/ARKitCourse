@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8433CBFA24670CC700A3D2E8 /* vector-basketball-texture-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 8433CBF924670CC700A3D2E8 /* vector-basketball-texture-background.png */; };
 		845D1037245D69ED005C9A58 /* IkeaItemCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 845D1036245D69ED005C9A58 /* IkeaItemCollectionViewCell.swift */; };
 		845D1039245EA234005C9A58 /* car-scene.scn in Resources */ = {isa = PBXBuildFile; fileRef = 845D1038245EA234005C9A58 /* car-scene.scn */; };
 		84D454FF2454B23300073279 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D454FE2454B23300073279 /* AppDelegate.swift */; };
@@ -22,7 +21,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		8433CBF924670CC700A3D2E8 /* vector-basketball-texture-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vector-basketball-texture-background.png"; sourceTree = "<group>"; };
 		845D1036245D69ED005C9A58 /* IkeaItemCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeaItemCollectionViewCell.swift; sourceTree = "<group>"; };
 		845D1038245EA234005C9A58 /* car-scene.scn */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = "car-scene.scn"; sourceTree = "<group>"; };
 		84D454FB2454B23300073279 /* ARKitCourse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ARKitCourse.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,7 +85,6 @@
 		84D45512245CA77300073279 /* Textures */ = {
 			isa = PBXGroup;
 			children = (
-				8433CBF924670CC700A3D2E8 /* vector-basketball-texture-background.png */,
 				84D45513245CA77F00073279 /* Jellyfish.png */,
 			);
 			path = Textures;
@@ -154,7 +151,6 @@
 				84D4550B2454B23400073279 /* LaunchScreen.storyboard in Resources */,
 				84D455082454B23400073279 /* Assets.xcassets in Resources */,
 				84D45516245CA7F400073279 /* art.scnassets in Resources */,
-				8433CBFA24670CC700A3D2E8 /* vector-basketball-texture-background.png in Resources */,
 				84D45518245CA82100073279 /* Jellyfish.dae in Resources */,
 				845D1039245EA234005C9A58 /* car-scene.scn in Resources */,
 				84D45514245CA77F00073279 /* Jellyfish.png in Resources */,
@@ -248,7 +244,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -302,7 +298,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;

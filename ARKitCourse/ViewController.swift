@@ -78,8 +78,8 @@ class ViewController: UIViewController {
     private var rootNodeChildrenNames = [String]()
     private var currentSection = Section.section12 {
         didSet {
-            configureCurrentSection()
             removeAllTapRecognizers()
+            configureCurrentSection()
             restartSession()
             makeSolarSystem()
         }
@@ -107,6 +107,18 @@ class ViewController: UIViewController {
 
     var startingPosition: SCNNode?
 
+    // MARK: - Basketball Properties
+
+    var power: Float = 1.0
+    var basketWasAdded = false
+
+    // MARK: - Init/Deinit
+
+    deinit {
+        timer?.invalidate()
+        timer = nil
+    }
+
     // MARK: - View Lifecycle
 
     override func viewDidLoad() {
@@ -132,14 +144,36 @@ class ViewController: UIViewController {
         guard !touches.isEmpty else {
             return
         }
-        // If user touched with 2 fingers, the count will be 2
-        userTouches += touches.count
-        userDidTouchScreen = true
+        switch currentSection {
+            case .section9:
+                // If user touched with 2 fingers, the count will be 2
+                userTouches += touches.count
+                userDidTouchScreen = true
+            case .section12:
+                guard basketWasAdded else {
+                    return
+                }
+                setTimerForBasketball()
+            default:
+                break
+        }
+
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        userTouches = 0
-        userDidTouchScreen = false
+        switch currentSection {
+            case .section9:
+                userTouches = 0
+                userDidTouchScreen = false
+            case .section12:
+                if basketWasAdded {
+                    timer?.invalidate()
+                    throwBall()
+                }
+                power = 1
+            default:
+                break
+        }
     }
 
     // MARK: - Actions
@@ -149,7 +183,7 @@ class ViewController: UIViewController {
         case .section3:
             makeHouse()
         case .section6:
-            setTimer()
+            setTimerForJellyfish()
             addJellyfish()
             leftButton.isEnabled = false
         case .section9:
@@ -167,8 +201,6 @@ class ViewController: UIViewController {
         case .section3, .section9:
             restartSession()
         case .section6:
-            timer?.invalidate()
-            timer = nil
             resetJellyfishLabel()
             restartSession()
             leftButton.isEnabled = true
@@ -215,7 +247,7 @@ private extension ViewController {
         case .section11:
             configureSection11(isHidden: false)
         case .section12:
-            configureSection12(isHidden: true)
+            configureSection12(isHidden: false)
         }
         sceneView.session.run(configuration)
     }
@@ -327,10 +359,18 @@ private extension ViewController {
 
     func configureSection12(isHidden: Bool) {
         plusButton.isHidden = isHidden
+        basketWasAdded = false
         guard !isHidden else {
             return
         }
+        topLabel.font = .boldSystemFont(ofSize: 25)
+        topLabel.text = "Plane Detected"
+        configuration.planeDetection = .horizontal
+        sceneView.delegate = self
         sceneView.automaticallyUpdatesLighting = true
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleBasketballTap))
+        sceneView.addGestureRecognizer(tapGestureRecognizer)
+        tapGestureRecognizer.cancelsTouchesInView = false
     }
 
 }
@@ -350,12 +390,10 @@ extension ViewController: ARSCNViewDelegate {
         switch currentSection {
         case .section7:
             handlePlaneDidAdd(node: node, for: anchor, childNode: makeLavaNode(for: anchor))
-        case .section8:
+        case .section8, .section11, .section12:
             handlePlaneDidAdd(node: node, for: anchor)
         case .section9:
             handlePlaneDidAdd(node: node, for: anchor, childNode: makeConcreteNode(for: anchor))
-        case .section11:
-            handlePlaneDidAdd(node: node, for: anchor)
         default:
             break
         }
@@ -446,6 +484,8 @@ private extension ViewController {
     }
 
     func restartSession() {
+        timer?.invalidate()
+        timer = nil
         self.sceneView.scene.rootNode.enumerateChildNodes { (node, _) in
             if let nodeName = node.name, rootNodeChildrenNames.contains(nodeName) {
                 node.removeFromParentNode()
@@ -661,7 +701,7 @@ private extension ViewController {
         node.addAnimation(spin, forKey: "position")
     }
 
-    func setTimer() {
+    func setTimerForJellyfish() {
         countdown = 10
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
             guard let self = self else {
@@ -1103,7 +1143,8 @@ private extension ViewController {
     func addPortal(hitTestResult: ARHitTestResult) {
         guard
             let portalScene = SCNScene(named: "art.scnassets/portal.scn"),
-            let portalNode = portalScene.rootNode.childNode(withName: "portal", recursively: false)
+            let portalNode = portalScene.rootNode.childNode(withName: "portal", recursively: false),
+            !rootNodeChildrenNames.contains("portal")
         else {
             fatalError("Either portalScene or portalNode do not exist")
         }
@@ -1112,11 +1153,15 @@ private extension ViewController {
         let transform = hitTestResult.worldTransform
         let planeXPosition = transform.columns.3.x
         let planeYPosition = transform.columns.3.y
-        let planeZPosition = transform.columns.3.z - 1
+        let planeZPosition = transform.columns.3.z
         portalNode.position = SCNVector3(planeXPosition, planeYPosition, planeZPosition)
         portalNode.name = "portal"
         rootNodeChildrenNames.append("portal")
         sceneView.scene.rootNode.addChildNode(portalNode)
+        addCanyon(portalNode: portalNode)
+    }
+
+    func addClouds(portalNode: SCNNode) {
         addPortalPlane(nodeName: "roof", portalNode: portalNode, imageName: "top")
         addPortalPlane(nodeName: "floor", portalNode: portalNode, imageName: "bottom")
         addWallPlane(nodeName: "backWall", portalNode: portalNode, imageName: "back")
@@ -1124,6 +1169,16 @@ private extension ViewController {
         addWallPlane(nodeName: "sideDoorA", portalNode: portalNode, imageName: "sideDoorA")
         addWallPlane(nodeName: "sideWallB", portalNode: portalNode, imageName: "sideB")
         addWallPlane(nodeName: "sideWallA", portalNode: portalNode, imageName: "sideA")
+    }
+
+    func addCanyon(portalNode: SCNNode) {
+        addPortalPlane(nodeName: "roof", portalNode: portalNode, imageName: "Canyon/top")
+        addPortalPlane(nodeName: "floor", portalNode: portalNode, imageName: "Canyon/bottom")
+        addWallPlane(nodeName: "backWall", portalNode: portalNode, imageName: "Canyon/back")
+        addWallPlane(nodeName: "sideDoorB", portalNode: portalNode, imageName: "Canyon/leftDoor")
+        addWallPlane(nodeName: "sideDoorA", portalNode: portalNode, imageName: "Canyon/rightDoor")
+        addWallPlane(nodeName: "sideWallB", portalNode: portalNode, imageName: "Canyon/left")
+        addWallPlane(nodeName: "sideWallA", portalNode: portalNode, imageName: "Canyon/right")
     }
 
     func addWallPlane(nodeName: String, portalNode: SCNNode, imageName: String) {
@@ -1154,6 +1209,97 @@ private extension ViewController {
         setDiffuse(assetImage, to: childNode)
         // by rendering later, we manage these to be sort of transparent
         childNode.renderingOrder = 200
+    }
+
+}
+
+// MARK: - Section 12 - Basketball Court
+
+private extension ViewController {
+
+    @objc func handleBasketballTap(_ sender: UITapGestureRecognizer) {
+        guard let sceneView = sender.view as? ARSCNView else {
+            return
+        }
+        let touchLocation = sender.location(in: sceneView)
+        let hitTestResult = sceneView.hitTest(touchLocation, types: .existingPlaneUsingExtent)
+        guard let firstHitTestResult = hitTestResult.first else {
+            return
+        }
+        addBasket(hitTestResult: firstHitTestResult)
+    }
+
+    func addBasket(hitTestResult: ARHitTestResult) {
+        guard
+            let basketScene = SCNScene(named: "art.scnassets/court.scn"),
+            let basketNode = basketScene.rootNode.childNode(withName: "basket", recursively: false),
+            !basketWasAdded
+        else {
+            fatalError("court.scn does not exist")
+        }
+        // This encodes position of plane
+        let transform = hitTestResult.worldTransform
+        let positionOfPlane = transform.columns.3
+        let planeXPosition = positionOfPlane.x
+        let planeYPosition = positionOfPlane.y
+        let planeZPosition = positionOfPlane.z
+        basketNode.position = SCNVector3(planeXPosition, planeYPosition, planeZPosition)
+        basketNode.name = "basket"
+        basketNode.physicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(node: basketNode, options: [SCNPhysicsShape.Option.keepAsCompound: true, SCNPhysicsShape.Option.type: SCNPhysicsShape.ShapeType.concavePolyhedron]))
+
+        rootNodeChildrenNames.append("basket")
+        sceneView.scene.rootNode.addChildNode(basketNode)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: { [weak self] in
+            self?.basketWasAdded = true
+        })
+    }
+
+    func setTimerForBasketball() {
+        timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] timer in
+            guard let self = self else {
+                return
+            }
+            self.power += 1
+            self.topLabel.text = String(self.power)
+        }
+    }
+
+    func throwBall() {
+        guard let pointOfView = sceneView.pointOfView else {
+            return
+        }
+        removeEveryOtherBall()
+        let transform = pointOfView.transform
+        let location = SCNVector3(transform.m41, transform.m42, transform.m43)
+        let orientation = SCNVector3(-transform.m31, -transform.m32, -transform.m33)
+        let position = location + orientation
+        let ball = SCNNode(geometry: SCNSphere(radius: 0.2))
+        setDiffuse(#imageLiteral(resourceName: "12_Basket/ball"), to: ball)
+        ball.position = position
+        ball.name = "basketball"
+        rootNodeChildrenNames.append("basketball")
+        let body = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: ball))
+        ball.physicsBody = body
+        // Control how far it bounces from the board
+        // Controls the energy that's lost when two objects collide
+        // If it is one, it bouces back with the same power that it was sent.
+        // At 0, it loses all its cinetic energy
+        body.restitution = 0.2
+        ball.physicsBody?.applyForce(
+            SCNVector3(
+                orientation.x * power,
+                orientation.y * power,
+                orientation.z * power),
+            asImpulse: true)
+        sceneView.scene.rootNode.addChildNode(ball)
+    }
+
+    func removeEveryOtherBall() {
+        sceneView.scene.rootNode.enumerateChildNodes { (node, _) in
+            if node.name == "basketball" {
+                node.removeFromParentNode()
+            }
+        }
     }
 
 }
