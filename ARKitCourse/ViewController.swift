@@ -2,6 +2,11 @@ import ARKit
 import CoreMotion
 import UIKit
 
+enum BitMaskCategory: Int {
+    case bullet = 2
+    case target = 3
+}
+
 class ViewController: UIViewController {
 
     // MARK: - Nested Types
@@ -27,6 +32,8 @@ class ViewController: UIViewController {
         case section11
         // Basketball
         case section12
+        // Shooter
+        case section13
 
         var name: String {
             switch self {
@@ -50,6 +57,8 @@ class ViewController: UIViewController {
                 return "AR Portal"
             case .section12:
                 return "Basketball Court"
+            case .section13:
+                return "Shooter"
             }
         }
     }
@@ -76,7 +85,7 @@ class ViewController: UIViewController {
     private let configuration = ARWorldTrackingConfiguration()
     private let motionManager = CMMotionManager()
     private var rootNodeChildrenNames = [String]()
-    private var currentSection = Section.section12 {
+    private var currentSection = Section.section13 {
         didSet {
             removeAllTapRecognizers()
             configureCurrentSection()
@@ -127,7 +136,6 @@ class ViewController: UIViewController {
         sectionPickerView.dataSource = self
         sectionPickerView.delegate = self
         configureCurrentSection()
-        setUpAccelerometer()
         if let sectionIndex = Section.allCases.firstIndex(of: currentSection) {
             sectionPickerView.selectRow(sectionIndex, inComponent: 0, animated: true)
         }
@@ -153,6 +161,7 @@ class ViewController: UIViewController {
                 guard basketWasAdded else {
                     return
                 }
+                topLabel.text = "Touches began"
                 setTimerForBasketball()
             default:
                 break
@@ -194,6 +203,10 @@ class ViewController: UIViewController {
     }
 
     @IBAction func didTapMiddleButton(_ sender: Any) {
+        guard .section13 == currentSection else {
+            return
+        }
+        addShootingSectionTargets()
     }
 
     @IBAction func didTapRightButton(_ sender: Any) {
@@ -226,6 +239,7 @@ private extension ViewController {
         configureSection10(isHidden: true)
         configureSection11(isHidden: true)
         configureSection12(isHidden: true)
+        configureSection13(isHidden: true)
 
         switch currentSection {
         case .section3:
@@ -248,6 +262,8 @@ private extension ViewController {
             configureSection11(isHidden: false)
         case .section12:
             configureSection12(isHidden: false)
+        case .section13:
+            configureSection13(isHidden: false)
         }
         sceneView.session.run(configuration)
     }
@@ -332,6 +348,7 @@ private extension ViewController {
         rightButton.setTitle("Reset", for: .normal)
         configuration.planeDetection = .horizontal
         sceneView.delegate = self
+        setUpAccelerometer()
     }
 
     func configureSection10(isHidden: Bool) {
@@ -363,14 +380,30 @@ private extension ViewController {
         guard !isHidden else {
             return
         }
+        power = 1
         topLabel.font = .boldSystemFont(ofSize: 25)
         topLabel.text = "Plane Detected"
         configuration.planeDetection = .horizontal
         sceneView.delegate = self
         sceneView.automaticallyUpdatesLighting = true
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleBasketballTap))
-        sceneView.addGestureRecognizer(tapGestureRecognizer)
         tapGestureRecognizer.cancelsTouchesInView = false
+        tapGestureRecognizer.name = "basketGestureRecognizer"
+        sceneView.addGestureRecognizer(tapGestureRecognizer)
+    }
+
+    func configureSection13(isHidden: Bool) {
+        plusButton.isHidden = isHidden
+        middleButton.isHidden = isHidden
+        sceneView.autoenablesDefaultLighting = !isHidden
+        guard !isHidden else {
+            return
+        }
+        power = 50
+        sceneView.scene.physicsWorld.contactDelegate = self
+        middleButton.setTitle("Add target", for: .normal)
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleShootingTap))
+        sceneView.addGestureRecognizer(tapGestureRecognizer)
     }
 
 }
@@ -426,6 +459,42 @@ extension ViewController: ARSCNViewDelegate {
 
     func renderer(_ renderer: SCNSceneRenderer, didSimulatePhysicsAtTime time: TimeInterval) {
         handleDidSimulatePhysics()
+    }
+
+}
+
+// MARK: - SCNPhysicsContactDelegate
+
+extension ViewController: SCNPhysicsContactDelegate {
+
+    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+        guard .section13 == currentSection else {
+            return
+        }
+        let nodeA = contact.nodeA
+        let nodeB = contact.nodeB
+        let target: SCNNode?
+        if nodeA.physicsBody?.categoryBitMask == BitMaskCategory.target.rawValue {
+            target = nodeA
+        } else if nodeB.physicsBody?.categoryBitMask == BitMaskCategory.target.rawValue {
+            target = nodeB
+        } else {
+            target = nil
+        }
+        guard let confetti = SCNParticleSystem(named: "art.scnassets/confetti.sks", inDirectory: nil) else {
+            return
+        }
+        confetti.loops = false
+        confetti.particleLifeSpan = 4
+        confetti.emitterShape = target?.geometry
+
+        let confettiNode = SCNNode()
+        confettiNode.addParticleSystem(confetti)
+        confettiNode.position = contact.contactPoint
+        confettiNode.name = "confetti"
+        rootNodeChildrenNames.append("confetti")
+        sceneView.scene.rootNode.addChildNode(confettiNode)
+        target?.removeFromParentNode()
     }
 
 }
@@ -1251,6 +1320,11 @@ private extension ViewController {
         sceneView.scene.rootNode.addChildNode(basketNode)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: { [weak self] in
             self?.basketWasAdded = true
+            self?.sceneView.gestureRecognizers?.forEach{ gestureRecognizer in
+                if gestureRecognizer.name == "basketGestureRecognizer" {
+                    self?.sceneView.removeGestureRecognizer(gestureRecognizer)
+                }
+            }
         })
     }
 
@@ -1300,6 +1374,70 @@ private extension ViewController {
                 node.removeFromParentNode()
             }
         }
+    }
+
+}
+
+// MARK: - Section 13 - Shooting
+
+private extension ViewController {
+
+    func addShootingSectionTargets() {
+        addEgg(x: 5, y: 0, z: -40)
+        addEgg(x: 0, y: 0, z: -40)
+        addEgg(x: -5, y: 0, z: -40)
+    }
+
+    func addEgg(x: Float, y: Float, z: Float) {
+        guard
+            let eggScene = SCNScene(named: "art.scnassets/egg.scn"),
+            let eggNode = eggScene.rootNode.childNode(withName: "egg", recursively: false)
+        else {
+            fatalError("Could not load egg")
+        }
+
+        eggNode.position = SCNVector3(x, y, z)
+        eggNode.physicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(node: eggNode, options: nil))
+        eggNode.physicsBody?.categoryBitMask = BitMaskCategory.target.rawValue
+        eggNode.physicsBody?.contactTestBitMask = BitMaskCategory.bullet.rawValue
+        eggNode.name = "egg"
+        rootNodeChildrenNames.append("egg")
+        sceneView.scene.rootNode.addChildNode(eggNode)
+    }
+
+    @objc func handleShootingTap(sender: UITapGestureRecognizer) {
+        guard let sceneView = sender.view as? ARSCNView else {
+            return
+        }
+        guard let pointOfView = sceneView.pointOfView else {
+            return
+        }
+        let transform = pointOfView.transform
+        let orientation = SCNVector3(-transform.m31, -transform.m32, -transform.m33)
+        let locationOfCameraView = SCNVector3(transform.m41, transform.m42, transform.m43)
+        let position = orientation + locationOfCameraView
+        let bulletNode = SCNNode(geometry: SCNSphere(radius: 0.1))
+        setDiffuse(.red, to: bulletNode)
+        bulletNode.position = position
+        let body = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: bulletNode, options: nil))
+        body.isAffectedByGravity = false
+        bulletNode.physicsBody = body
+        bulletNode.physicsBody?.applyForce(
+            SCNVector3(
+                orientation.x * power,
+                orientation.y * power,
+                orientation.z * power),
+            asImpulse: true)
+        bulletNode.physicsBody?.categoryBitMask = BitMaskCategory.bullet.rawValue
+        // Here we tell the bullet to check collisions with target
+        bulletNode.physicsBody?.contactTestBitMask = BitMaskCategory.target.rawValue
+        bulletNode.name = "bullet"
+        rootNodeChildrenNames.append("bullet")
+        sceneView.scene.rootNode.addChildNode(bulletNode)
+        bulletNode.runAction(
+            SCNAction.sequence([
+                SCNAction.wait(duration: 2.0),
+                SCNAction.removeFromParentNode()]))
     }
 
 }
