@@ -14,10 +14,10 @@
             filePath = "ARKitCourse/ViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "303"
-            endingLineNumber = "303"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            startingLineNumber = "307"
+            endingLineNumber = "307"
+            landmarkName = "configureSection6(isHidden:)"
+            landmarkType = "7">
             <Locations>
                <Location
                   uuid = "1621BF9C-373C-40C5-A754-4CB5521DD1EC - 7642136ba3b0fb0f"
@@ -62,10 +62,10 @@
             filePath = "ARKitCourse/ViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1206"
-            endingLineNumber = "1206"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            startingLineNumber = "1207"
+            endingLineNumber = "1207"
+            landmarkName = "handlePortalTap(_:)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

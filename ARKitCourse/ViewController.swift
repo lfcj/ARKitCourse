@@ -121,6 +121,10 @@ class ViewController: UIViewController {
     var power: Float = 1.0
     var basketWasAdded = false
 
+    // MARK: - Shooter Properties
+
+    var target: SCNNode?
+
     // MARK: - Init/Deinit
 
     deinit {
@@ -473,15 +477,12 @@ extension ViewController: SCNPhysicsContactDelegate {
         }
         let nodeA = contact.nodeA
         let nodeB = contact.nodeB
-        let target: SCNNode?
         if nodeA.physicsBody?.categoryBitMask == BitMaskCategory.target.rawValue {
             target = nodeA
         } else if nodeB.physicsBody?.categoryBitMask == BitMaskCategory.target.rawValue {
             target = nodeB
-        } else {
-            target = nil
         }
-        guard let confetti = SCNParticleSystem(named: "art.scnassets/confetti.sks", inDirectory: nil) else {
+        guard let confetti = SCNParticleSystem(named: "art.scnassets/confetti2.scnp", inDirectory: nil) else {
             return
         }
         confetti.loops = false
